@@ -7,6 +7,8 @@
     --text-color: #dcdcdc;
     --card-bg-color: rgba(22, 33, 62, 0.8);
     --adopted-color: #ffc107;
+    --paper-bg: #fdf6e3;
+    --paper-text: #583c2c;
     --font-family: 'Nanum Myeongjo', serif;
 }
 
@@ -17,6 +19,7 @@ body {
     margin: 0;
     min-height: 100vh;
     box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 #app-container {
@@ -25,6 +28,8 @@ body {
     margin: 0 auto;
     padding: 20px;
     box-sizing: border-box;
+    position: relative;
+    z-index: 2;
 }
 
 header {
@@ -86,9 +91,15 @@ h2 {
 }
 
 /* --- 바다 페이지 --- */
+#sea-page {
+    position: relative;
+    overflow: hidden;
+}
 #sea-page .sea-content {
     text-align: center;
     padding: 80px 20px;
+    position: relative;
+    z-index: 2;
 }
 #sea-page h1 {
     font-size: 2.5rem;
@@ -101,18 +112,42 @@ h2 {
     color: var(--text-color);
     margin-bottom: 40px;
 }
+.sea-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+.floating-bottle {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    opacity: 0.2;
+}
+.floating-bottle::before {
+    content: '🍾';
+    font-size: 30px;
+}
+.bottle-1 { top: 20%; left: 10%; animation: float-up-down 10s infinite, float-left-right 15s infinite; }
+.bottle-2 { top: 50%; left: 80%; animation: float-up-down 8s infinite 2s, float-left-right 12s infinite 2s; }
+.bottle-3 { top: 70%; left: 20%; animation: float-up-down 12s infinite 1s, float-left-right 18s infinite 1s; }
+.bottle-4 { top: 90%; left: 50%; animation: float-up-down 9s infinite 3s, float-left-right 14s infinite 3s; }
 
 /* --- 버튼 스타일 --- */
+.glowing-btn, #get-bottle-from-sea, .back-btn {
+    font-family: var(--font-family);
+    cursor: pointer;
+    border-radius: 50px;
+    transition: all 0.3s;
+}
 .glowing-btn {
     background-color: var(--primary-glow-color);
     color: #fff;
     border: none;
     padding: 15px 30px;
-    border-radius: 50px;
     font-size: 1.2rem;
-    font-family: var(--font-family);
-    cursor: pointer;
-    transition: all 0.3s;
     box-shadow: 0 0 10px var(--primary-glow-color), 0 0 20px var(--primary-glow-color), 0 0 30px var(--primary-glow-color);
 }
 .glowing-btn:hover {
@@ -130,10 +165,6 @@ h2 {
     border: 1px solid var(--secondary-color);
     color: var(--secondary-color);
     padding: 12px 25px;
-    border-radius: 50px;
-    cursor: pointer;
-    font-family: var(--font-family);
-    transition: all 0.3s;
     margin-top: 20px;
 }
 #get-bottle-from-sea:hover {
@@ -143,107 +174,116 @@ h2 {
 
 /* --- 모달 --- */
 .modal-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.7);
     backdrop-filter: blur(5px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
-    animation: fadeIn 0.3s;
+    display: flex; justify-content: center; align-items: center;
+    z-index: 100; animation: fadeIn 0.3s;
 }
 .modal-content {
     background-color: var(--card-bg-color);
-    padding: 40px;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 600px;
+    padding: 40px; border-radius: 15px;
+    width: 90%; max-width: 600px;
     position: relative;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     border: 1px solid var(--primary-glow-color);
 }
 .modal-close-btn {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 2rem;
-    cursor: pointer;
+    position: absolute; top: 15px; right: 20px;
+    background: none; border: none;
+    color: #fff; font-size: 2rem; cursor: pointer;
 }
 .modal-content textarea {
-    width: 100%;
-    box-sizing: border-box;
-    height: 200px;
-    background-color: rgba(0,0,0,0.3);
-    color: var(--text-color);
+    width: 100%; box-sizing: border-box; height: 200px;
+    background-color: rgba(0,0,0,0.3); color: var(--text-color);
     border: 1px solid var(--primary-glow-color);
-    border-radius: 10px;
-    padding: 15px;
-    font-family: var(--font-family);
-    font-size: 1.1rem;
-    resize: vertical;
-    margin-bottom: 20px;
+    border-radius: 10px; padding: 15px;
+    font-family: var(--font-family); font-size: 1.1rem;
+    resize: vertical; margin-bottom: 20px;
 }
-.modal-content .glowing-btn {
-    width: 100%;
-}
+.modal-content .glowing-btn { width: 100%; }
 
-/* --- 편지함(Inbox/Outbox) --- */
-#inbox-container, #outbox-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
+/* --- 편지함 리스트 --- */
+#inbox-container, #outbox-container { display: flex; flex-direction: column; gap: 20px; }
 .bottle-card {
     background-color: var(--card-bg-color);
     border-radius: 10px;
     border-left: 3px solid var(--primary-glow-color);
-    padding: 25px;
-    cursor: pointer;
+    padding: 25px; cursor: pointer;
     transition: transform 0.3s, box-shadow 0.3s;
 }
 .bottle-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
-.bottle-card .worry-snippet, .bottle-card .reply-snippet {
-    font-style: italic;
-    opacity: 0.7;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.bottle-card .worry-snippet {
+    font-style: italic; opacity: 0.7;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.bottle-card .card-status {
-    margin-top: 15px;
-    font-size: 0.9rem;
-    color: var(--adopted-color);
-}
+.bottle-card .card-status { margin-top: 15px; font-size: 0.9rem; color: var(--adopted-color); }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* --- 편지 상세 보기 --- */
+.bottle-detail {
+    background: var(--card-bg-color);
+    padding: 30px; border-radius: 15px;
+}
+.back-btn {
+    background: none; border: 1px solid var(--secondary-color);
+    color: var(--secondary-color); padding: 8px 15px;
+    margin-bottom: 25px;
+}
+.back-btn:hover { background-color: var(--secondary-color); color: var(--bg-gradient-start); }
+.worry-full-text {
+    background: var(--paper-bg);
+    color: var(--paper-text);
+    padding: 30px;
+    border-radius: 5px;
+    line-height: 1.8;
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+    border: 1px solid #d4c5a9;
+}
+.replies-section { margin-top: 20px; }
+.replies-section h4 {
+    color: var(--secondary-color);
+    font-weight: normal;
+    border-bottom: 1px solid var(--primary-glow-color);
+    padding-bottom: 10px;
+}
+.reply-card {
+    background: rgba(255,255,255,0.05);
+    padding: 20px; border-radius: 10px;
+    margin-top: 15px;
+    transition: box-shadow 0.3s;
+}
+.reply-card p { margin: 0; line-height: 1.7; }
+.reply-card .reply-actions { text-align: right; margin-top: 15px; }
+.reply-card.adopted {
+    border: 1px solid var(--adopted-color);
+    box-shadow: 0 0 15px var(--adopted-color);
+}
+.adopt-btn {
+    background: none; border: 1px solid var(--adopted-color);
+    color: var(--adopted-color); padding: 8px 15px;
+}
+.adopt-btn:hover { background-color: var(--adopted-color); color: var(--card-bg-color); }
+.adopt-btn[disabled] { cursor: not-allowed; opacity: 0.5; background: #555; border-color: #555; }
+
+/* --- 애니메이션 --- */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes float-up-down {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+@keyframes float-left-right {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(20px); }
 }
 
 @media (max-width: 600px) {
-    #app-container {
-        padding: 10px;
-    }
-    .user-status {
-        font-size: 1rem;
-        padding: 0 10px 10px 10px;
-    }
-    #sea-page h1 {
-        font-size: 2rem;
-    }
-    .modal-content {
-        width: 95%;
-        padding: 30px 20px;
-    }
+    #app-container { padding: 10px; }
+    .user-status { font-size: 1rem; padding: 0 10px 10px 10px; }
+    #sea-page h1 { font-size: 2rem; }
+    .modal-content { width: 95%; padding: 30px 20px; }
 }
