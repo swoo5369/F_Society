@@ -231,9 +231,19 @@ const App = {
         const worry = state.user.inbox.find(w => w.id === worryId);
         if (worry) {
             worry.replied = true;
+            // 답장을 보내면 온도가 약간 오릅니다. (다른 사람에게 마음을 보냈으므로)
             state.user.temperature += 0.2;
+            
+            // NEW: 50% 확률로 내가 보낸 답장이 채택되었다고 시뮬레이션
+            if (Math.random() < 0.5) {
+                state.user.vouchers++;
+                state.user.temperature += 0.3; // 채택 보상 온도
+                alert('당신의 따뜻한 답장이 채택되어 고민권 1개와 마음의 온도가 올랐습니다!');
+            } else {
+                alert('따뜻한 마음이 전달되었어요. (시뮬레이션)');
+            }
+            
             DataManager.saveUser();
-            alert('따뜻한 마음이 전달되었어요. (시뮬레이션)');
             this.navigate('inbox');
         }
     },
@@ -246,12 +256,12 @@ const App = {
         const reply = worry.replies.find(r => r.id === replyIdToAdopt);
         if (reply) {
             reply.isAdopted = true;
-            state.user.vouchers++;
-            state.user.temperature += 0.5;
+            // 보상 제거: 채택하는 행위 자체로는 고민권과 온도를 얻지 않습니다.
+            // 대신, 답장을 작성한 '어느 따뜻한 마음'이 보상을 받았다고 시뮬레이션됩니다.
             DataManager.saveMyWorries();
-            DataManager.saveUser();
-            alert('답장을 채택했어요! 보상으로 고민권 1개를 받았습니다.');
-            this.handleViewMyWorry(worryId); // Re-render the detail view
+            DataManager.saveUser(); // user state는 변경 없으나 saveUser 호출하여 consistency 유지
+            alert('가장 마음에 드는 답장을 채택했어요.');
+            this.handleViewMyWorry(worryId); // 상세 뷰 다시 렌더링
         }
     },
 
