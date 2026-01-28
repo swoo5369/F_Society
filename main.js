@@ -114,21 +114,37 @@ const UIRenderer = {
                 </div>
             `).join('');
         },
-        renderWorryDetail(worry) {
+        renderWorryDetail(worry, isEditing = false) {
             const container = document.getElementById('inbox-container');
             
             let contentHTML;
-            if (worry.replied && worry.myReply) {
+            if (isEditing) {
+                // 수정 모드
+                contentHTML = `
+                    <form data-action="submit-edited-reply" data-worry-id="${worry.id}">
+                        <textarea>${worry.myReply}</textarea>
+                        <button type="submit" class="glowing-btn">수정 완료</button>
+                    </form>
+                `;
+            } else if (worry.replied && worry.myReply) {
+                // 답장 보기 모드
                 const adoptedBadge = worry.myReplyWasAdopted ? '<span class="adopted-badge">✨ 채택됨</span>' : '';
                 contentHTML = `
                     <div class="replies-section">
-                        <h4>내가 보낸 온기 ${adoptedBadge}</h4>
+                        <div class="detail-actions-top">
+                            <h4>내가 보낸 온기 ${adoptedBadge}</h4>
+                            <div>
+                                <button class="secondary-btn" data-action="edit-reply" data-worry-id="${worry.id}">수정</button>
+                                <button class="danger-btn" data-action="delete-reply" data-worry-id="${worry.id}">삭제</button>
+                            </div>
+                        </div>
                         <div class="reply-card">
                             <p>${worry.myReply}</p>
                         </div>
                     </div>
                 `;
             } else {
+                // 답장 전 모드
                 contentHTML = `
                     <form data-action="submit-reply" data-worry-id="${worry.id}">
                         <textarea placeholder="따뜻한 마음을 답장으로 보내주세요..."></textarea>
@@ -146,147 +162,200 @@ const UIRenderer = {
                 </div>
             `;
         },
-        renderMyWorryDetail(worry) {
-            const container = document.getElementById('outbox-container');
-            const repliesHTML = worry.replies.map(reply => `
-                <div class="reply-card ${reply.isAdopted ? 'adopted' : ''}">
-                    <p>"${reply.text}" - ${reply.author}</p>
-                    <div class="reply-actions">
-                        <button class="adopt-btn" data-action="adopt-reply" data-worry-id="${worry.id}" data-reply-id="${reply.id}" ${reply.isAdopted ? 'disabled' : ''}>
-                            ${reply.isAdopted ? '채택됨' : '채택하기'}
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-    
-            container.innerHTML = `
-                <div class="bottle-detail">
-                    <button class="back-btn" data-action="back-to-outbox">&larr; 보낸 편지함</button>
-                    <h3>내가 보낸 이야기</h3>
-                    <p class="worry-full-text">${worry.text}</p>
-                    <div class="replies-section">
-                        <h4>받은 온기들</h4>
-                        ${repliesHTML || '<p>아직 온기가 도착하지 않았어요.</p>'} 
-                    </div>
-                </div>
-            `;
-        }
-    };
-    
-    // --- 애플리케이션 로직 ---
-    const App = {
-        init() {
-            DataManager.init();
-            this.setupEventListeners();
-            const hash = window.location.hash.replace('#', '');
-            if (['sea', 'inbox', 'outbox'].includes(hash)) { state.currentPage = hash; }
-            this.updateNav();
-            UIRenderer.render();
-        },
-    
-        setupEventListeners() {
-            document.querySelector('nav').addEventListener('click', e => {
-                if (e.target.tagName === 'A') { this.navigate(e.target.hash.replace('#', '')); }
-            });
-    
-            const modal = document.getElementById('worry-modal');
-            document.getElementById('show-worry-modal').addEventListener('click', () => modal.style.display = 'flex');
-            document.querySelector('.modal-close-btn').addEventListener('click', () => modal.style.display = 'none');
-            document.getElementById('send-worry-bottle').addEventListener('click', this.handleSendWorry.bind(this));
-            document.getElementById('get-bottle-from-sea').addEventListener('click', this.handleGetBottle.bind(this));
+                renderMyWorryDetail(worry) {
+                    const container = document.getElementById('outbox-container');
+                    const repliesHTML = worry.replies.map(reply => `
+                        <div class="reply-card ${reply.isAdopted ? 'adopted' : ''}">
+                            <p>"${reply.text}" - ${reply.author}</p>
+                            <div class="reply-actions">
+                                <button class="adopt-btn" data-action="adopt-reply" data-worry-id="${worry.id}" data-reply-id="${reply.id}" ${reply.isAdopted ? 'disabled' : ''}>
+                                    ${reply.isAdopted ? '채택됨' : '채택하기'}
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
             
-            document.querySelector('main').addEventListener('click', e => {
-                const target = e.target.closest('[data-action]');
-                if (!target) return;
-    
-                const action = target.dataset.action;
-                const worryId = target.dataset.worryId;
-                const replyId = target.dataset.replyId;
-    
-                if (action === 'view-worry') { this.handleViewWorry(worryId); }
-                if (action === 'view-my-worry') { this.handleViewMyWorry(worryId); }
-                if (action === 'back-to-inbox') { this.navigate('inbox'); }
-                if (action === 'back-to-outbox') { this.navigate('outbox'); }
-                if (action === 'adopt-reply') { this.handleAdoptReply(worryId, replyId); }
-            });
-            
-            document.querySelector('main').addEventListener('submit', e => {
-                e.preventDefault();
-                const target = e.target.closest('[data-action]');
-                if (!target) return;
-                
-                const action = target.dataset.action;
-                const worryId = target.dataset.worryId;
-    
-                if (action === 'submit-reply') {
-                    const textarea = target.querySelector('textarea');
-                    this.handleSubmitReply(worryId, textarea.value);
+                    container.innerHTML = `
+                        <div class="bottle-detail">
+                            <div class="detail-actions-top">
+                                <button class="back-btn" data-action="back-to-outbox">&larr; 보낸 유리병</button>
+                                <button class="danger-btn" data-action="delete-my-worry" data-worry-id="${worry.id}">유리병 깨뜨리기</button>
+                            </div>
+                            <h3>내가 보낸 이야기</h3>
+                            <p class="worry-full-text">${worry.text}</p>
+                            <div class="replies-section">
+                                <h4>받은 온기들</h4>
+                                ${repliesHTML || '<p>아직 온기가 도착하지 않았어요.</p>'} 
+                            </div>
+                        </div>
+                    `;
                 }
-            });
-        },
-    
-        navigate(page) {
-            state.currentPage = page;
-            window.location.hash = page;
-            this.updateNav();
-            UIRenderer.render();
-        },
-    
-        updateNav() {
-            document.querySelectorAll('nav a').forEach(a => {
-                a.classList.toggle('active', a.hash.replace('#', '') === state.currentPage);
-            });
-        },
-        
-        handleViewWorry(worryId) {
-            const worry = state.user.inbox.find(w => w.id === worryId);
-            if(worry) { UIRenderer.renderWorryDetail(worry); }
-        },
-        
-        handleViewMyWorry(worryId) {
-            const worry = state.myWorries.find(w => w.id === worryId);
-            if(worry) { UIRenderer.renderMyWorryDetail(worry); }
-        },
-    
-        handleSubmitReply(worryId, text) {
-            text = text.trim();
-            if (!text) { alert('따뜻한 마음을 나눠주세요.'); return; }
+            };
             
-            const worry = state.user.inbox.find(w => w.id === worryId);
-            if (worry) {
-                worry.replied = true;
-                worry.myReply = text; // 내가 보낸 답장 저장
+            // --- 애플리케이션 로직 ---
+            const App = {
+                init() {
+                    DataManager.init();
+                    this.setupEventListeners();
+                    const hash = window.location.hash.replace('#', '');
+                    if (['sea', 'inbox', 'outbox'].includes(hash)) { state.currentPage = hash; }
+                    this.updateNav();
+                    UIRenderer.render();
+                },
+            
+                        setupEventListeners() {
+                            document.querySelector('nav').addEventListener('click', e => {
+                                if (e.target.tagName === 'A') { this.navigate(e.target.hash.replace('#', '')); }
+                            });
+                    
+                            const modal = document.getElementById('worry-modal');
+                            document.getElementById('show-worry-modal').addEventListener('click', () => modal.style.display = 'flex');
+                            document.querySelector('.modal-close-btn').addEventListener('click', () => modal.style.display = 'none');
+                            document.getElementById('send-worry-bottle').addEventListener('click', this.handleSendWorry.bind(this));
+                            document.getElementById('get-bottle-from-sea').addEventListener('click', this.handleGetBottle.bind(this));
+                            
+                            document.querySelector('main').addEventListener('click', e => {
+                                const target = e.target.closest('[data-action]');
+                                if (!target) return;
+                    
+                                const action = target.dataset.action;
+                                const worryId = target.dataset.worryId;
+                                const replyId = target.dataset.replyId;
+                    
+                                if (action === 'view-worry') { this.handleViewWorry(worryId); }
+                                if (action === 'view-my-worry') { this.handleViewMyWorry(worryId); }
+                                if (action === 'back-to-inbox') { this.navigate('inbox'); }
+                                if (action === 'back-to-outbox') { this.navigate('outbox'); }
+                                if (action === 'adopt-reply') { this.handleAdoptReply(worryId, replyId); }
+                                if (action === 'delete-my-worry') { this.handleDeleteMyWorry(worryId); }
+                                if (action === 'edit-reply') { this.handleEditReply(worryId); }
+                                if (action === 'delete-reply') { this.handleDeleteReply(worryId); }
+                            });
+                            
+                            document.querySelector('main').addEventListener('submit', e => {
+                                e.preventDefault();
+                                const target = e.target.closest('[data-action]');
+                                if (!target) return;
+                                
+                                const action = target.dataset.action;
+                                const worryId = target.dataset.worryId;
+                    
+                                if (action === 'submit-reply') {
+                                    const textarea = target.querySelector('textarea');
+                                    this.handleSubmitReply(worryId, textarea.value);
+                                }
+                                if (action === 'submit-edited-reply') {
+                                    const textarea = target.querySelector('textarea');
+                                    this.handleSubmitEditedReply(worryId, textarea.value);
+                                }
+                            });
+                        },
+                    
+                        navigate(page) {
+                            state.currentPage = page;
+                            window.location.hash = page;
+                            this.updateNav();
+                            UIRenderer.render();
+                        },
+                    
+                        updateNav() {
+                            document.querySelectorAll('nav a').forEach(a => {
+                                a.classList.toggle('active', a.hash.replace('#', '') === state.currentPage);
+                            });
+                        },
+                        
+                        handleViewWorry(worryId, isEditing = false) {
+                            const worry = state.user.inbox.find(w => w.id === worryId);
+                            if(worry) { UIRenderer.renderWorryDetail(worry, isEditing); }
+                        },
+                        
+                        handleViewMyWorry(worryId) {
+                            const worry = state.myWorries.find(w => w.id === worryId);
+                            if(worry) { UIRenderer.renderMyWorryDetail(worry); }
+                        },
+                    
+                        handleSubmitReply(worryId, text) {
+                            text = text.trim();
+                            if (!text) { alert('따뜻한 마음을 나눠주세요.'); return; }
+                            
+                            const worry = state.user.inbox.find(w => w.id === worryId);
+                            if (worry) {
+                                worry.replied = true;
+                                worry.myReply = text; // 내가 보낸 답장 저장
+                                
+                                if (Math.random() < 0.5) {
+                                    worry.myReplyWasAdopted = true; // 채택 상태 저장
+                                    state.user.vouchers++;
+                                    state.user.temperature += 0.3;
+                                    alert('당신의 따뜻한 온기가 채택되어 고민권 1개와 마음의 온도가 올랐습니다!');
+                                } else {
+                                    alert('따뜻한 온기가 전달되었어요. (시뮬레이션)');
+                                }
+                                
+                                DataManager.saveUser();
+                                this.navigate('inbox');
+                            }
+                        },
                 
-                if (Math.random() < 0.5) {
-                    worry.myReplyWasAdopted = true; // 채택 상태 저장
-                    state.user.vouchers++;
-                    state.user.temperature += 0.3;
-                    alert('당신의 따뜻한 온기가 채택되어 고민권 1개와 마음의 온도가 올랐습니다!');
-                } else {
-                    alert('따뜻한 온기가 전달되었어요. (시뮬레이션)');
-                }
+                        handleEditReply(worryId) {
+                            this.handleViewWorry(worryId, true); // 수정 모드로 렌더링
+                        },
                 
-                DataManager.saveUser();
-                this.navigate('inbox');
-            }
-        },    
-    handleAdoptReply(worryId, replyIdToAdopt) {
-        const worry = state.myWorries.find(w => w.id === worryId);
-        if(!worry) return;
-
-        worry.replies.forEach(r => r.isAdopted = false);
-        const reply = worry.replies.find(r => r.id === replyIdToAdopt);
-        if (reply) {
-            reply.isAdopted = true;
-            // 보상 제거: 채택하는 행위 자체로는 고민권과 온도를 얻지 않습니다.
-            DataManager.saveMyWorries();
-            DataManager.saveUser();
-            alert('가장 마음에 드는 온기를 채택했어요.');
-            this.handleViewMyWorry(worryId);
-        }
-    },
-
-    handleSendWorry() {
+                        handleSubmitEditedReply(worryId, newText) {
+                            newText = newText.trim();
+                            if (!newText) { alert('따뜻한 마음을 나눠주세요.'); return; }
+                
+                            const worry = state.user.inbox.find(w => w.id === worryId);
+                            if (worry) {
+                                worry.myReply = newText;
+                                DataManager.saveUser();
+                                alert('온기를 수정했습니다.');
+                                this.handleViewWorry(worryId, false); // 보기 모드로 다시 렌더링
+                            }
+                        },
+                
+                        handleDeleteReply(worryId) {
+                            if (confirm('보낸 온기를 지우시겠어요?')) {
+                                const worry = state.user.inbox.find(w => w.id === worryId);
+                                if (worry) {
+                                    worry.replied = false;
+                                    delete worry.myReply;
+                                    delete worry.myReplyWasAdopted;
+                                    DataManager.saveUser();
+                                    alert('보낸 온기를 지웠습니다.');
+                                    this.handleViewWorry(worryId); // 폼이 다시 보이도록 렌더링
+                                }
+                            }
+                        },
+                    
+                        handleAdoptReply(worryId, replyIdToAdopt) {                    const worry = state.myWorries.find(w => w.id === worryId);
+                    if(!worry) return;
+        
+                    worry.replies.forEach(r => r.isAdopted = false);
+                    const reply = worry.replies.find(r => r.id === replyIdToAdopt);
+                    if (reply) {
+                        reply.isAdopted = true;
+                        // 보상 제거: 채택하는 행위 자체로는 고민권과 온도를 얻지 않습니다.
+                        DataManager.saveMyWorries();
+                        DataManager.saveUser();
+                        alert('가장 마음에 드는 온기를 채택했어요.');
+                        this.handleViewMyWorry(worryId);
+                    }
+                },
+        
+                handleDeleteMyWorry(worryId) {
+                    if (confirm('정말로 이 유리병을 깨뜨리시겠어요? 사라진 이야기는 돌아오지 않아요.')) {
+                        const index = state.myWorries.findIndex(w => w.id === worryId);
+                        if (index > -1) {
+                            state.myWorries.splice(index, 1);
+                            DataManager.saveMyWorries();
+                            alert('유리병을 깨뜨렸습니다.');
+                            this.navigate('outbox');
+                        }
+                    }
+                },
+            
+                handleSendWorry() {
         const input = document.getElementById('worry-input');
         const text = input.value.trim();
         if (!text) { alert('이야기를 들려주세요.'); return; }

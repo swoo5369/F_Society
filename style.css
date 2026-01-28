@@ -238,12 +238,35 @@ h2 {
     background: var(--card-bg-color);
     padding: 30px; border-radius: 15px;
 }
-.back-btn {
-    background: none; border: 1px solid var(--secondary-color);
-    color: var(--secondary-color); padding: 8px 15px;
+.detail-actions-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 25px;
 }
-.back-btn:hover { background-color: var(--secondary-color); color: var(--bg-gradient-start); }
+.back-btn, .secondary-btn, .danger-btn {
+    background: none;
+    border: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: var(--font-family);
+    transition: all 0.3s;
+}
+.back-btn:hover, .secondary-btn:hover {
+    background-color: var(--secondary-color);
+    color: var(--bg-gradient-start);
+}
+.danger-btn {
+    border-color: #e94560;
+    color: #e94560;
+}
+.danger-btn:hover {
+    background-color: #e94560;
+    color: #fff;
+}
+
 .worry-full-text {
     background: var(--paper-bg);
     color: var(--paper-text);
