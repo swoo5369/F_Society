@@ -82,188 +82,194 @@ const UIRenderer = {
         document.getElementById('show-worry-modal').disabled = state.user.vouchers <= 0;
     },
     renderSea() { /* 정적 컨텐츠 */ },
-    renderInbox() {
-        const container = document.getElementById('inbox-container');
-        if(state.user.inbox.length === 0){
-            container.innerHTML = '<p>아직 도착한 마음이 없어요.<br>바다에서 유리병을 주워보세요.</p>';
-            return;
-        }
-        container.innerHTML = state.user.inbox.map(worry => `
-            <div class="bottle-card" data-action="view-worry" data-worry-id="${worry.id}">
-                <p class="worry-snippet">"${worry.text}"</p>
-                <span class="card-status">${worry.replied ? '보낸 온기 확인' : '온기 보내기'}</span>
-            </div>
-        `).join('');
-    },
-    renderOutbox() {
-        const container = document.getElementById('outbox-container');
-        if(state.myWorries.length === 0){
-            container.innerHTML = '<p>아직 바다에 띄운 마음이 없어요.</p>';
-            return;
-        }
-        container.innerHTML = state.myWorries.map(worry => `
-            <div class="bottle-card" data-action="view-my-worry" data-worry-id="${worry.id}">
-                <p class="worry-snippet">"${worry.text}"</p>
-                <span class="card-status">${worry.replies.length}개의 온기 도착</span>
-            </div>
-        `).join('');
-    },
-    renderWorryDetail(worry) {
-        const container = document.getElementById('inbox-container');
-        
-        let contentHTML;
-        if (worry.replied && worry.myReply) {
-            contentHTML = `
-                <div class="replies-section">
-                    <h4>내가 보낸 온기</h4>
-                    <div class="reply-card">
-                        <p>${worry.myReply}</p>
+        renderInbox() {
+            const container = document.getElementById('inbox-container');
+            if(state.user.inbox.length === 0){
+                container.innerHTML = '<p>아직 도착한 마음이 없어요.<br>바다에서 유리병을 주워보세요.</p>';
+                return;
+            }
+            container.innerHTML = state.user.inbox.map(worry => {
+                let statusText = '온기 보내기';
+                if (worry.replied) {
+                    statusText = worry.myReplyWasAdopted ? '✨ 내 온기가 채택됐어요!' : '보낸 온기 확인';
+                }
+                return `
+                    <div class="bottle-card" data-action="view-worry" data-worry-id="${worry.id}">
+                        <p class="worry-snippet">"${worry.text}"</p>
+                        <span class="card-status">${statusText}</span>
+                    </div>
+                `;
+            }).join('');
+        },
+        renderOutbox() {
+            const container = document.getElementById('outbox-container');
+            if(state.myWorries.length === 0){
+                container.innerHTML = '<p>아직 바다에 띄운 마음이 없어요.</p>';
+                return;
+            }
+            container.innerHTML = state.myWorries.map(worry => `
+                <div class="bottle-card" data-action="view-my-worry" data-worry-id="${worry.id}">
+                    <p class="worry-snippet">"${worry.text}"</p>
+                    <span class="card-status">${worry.replies.length}개의 온기 도착</span>
+                </div>
+            `).join('');
+        },
+        renderWorryDetail(worry) {
+            const container = document.getElementById('inbox-container');
+            
+            let contentHTML;
+            if (worry.replied && worry.myReply) {
+                const adoptedBadge = worry.myReplyWasAdopted ? '<span class="adopted-badge">✨ 채택됨</span>' : '';
+                contentHTML = `
+                    <div class="replies-section">
+                        <h4>내가 보낸 온기 ${adoptedBadge}</h4>
+                        <div class="reply-card">
+                            <p>${worry.myReply}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                contentHTML = `
+                    <form data-action="submit-reply" data-worry-id="${worry.id}">
+                        <textarea placeholder="따뜻한 마음을 답장으로 보내주세요..."></textarea>
+                        <button type="submit" class="glowing-btn">온기 보내기</button>
+                    </form>
+                `;
+            }
+    
+            container.innerHTML = `
+                <div class="bottle-detail">
+                    <button class="back-btn" data-action="back-to-inbox">&larr; 주운 유리병</button>
+                    <h3>${worry.author}의 이야기</h3>
+                    <p class="worry-full-text">${worry.text}</p>
+                    ${contentHTML}
+                </div>
+            `;
+        },
+        renderMyWorryDetail(worry) {
+            const container = document.getElementById('outbox-container');
+            const repliesHTML = worry.replies.map(reply => `
+                <div class="reply-card ${reply.isAdopted ? 'adopted' : ''}">
+                    <p>"${reply.text}" - ${reply.author}</p>
+                    <div class="reply-actions">
+                        <button class="adopt-btn" data-action="adopt-reply" data-worry-id="${worry.id}" data-reply-id="${reply.id}" ${reply.isAdopted ? 'disabled' : ''}>
+                            ${reply.isAdopted ? '채택됨' : '채택하기'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+    
+            container.innerHTML = `
+                <div class="bottle-detail">
+                    <button class="back-btn" data-action="back-to-outbox">&larr; 보낸 편지함</button>
+                    <h3>내가 보낸 이야기</h3>
+                    <p class="worry-full-text">${worry.text}</p>
+                    <div class="replies-section">
+                        <h4>받은 온기들</h4>
+                        ${repliesHTML || '<p>아직 온기가 도착하지 않았어요.</p>'} 
                     </div>
                 </div>
             `;
-        } else {
-            contentHTML = `
-                <form data-action="submit-reply" data-worry-id="${worry.id}">
-                    <textarea placeholder="따뜻한 마음을 답장으로 보내주세요..."></textarea>
-                    <button type="submit" class="glowing-btn">온기 보내기</button>
-                </form>
-            `;
         }
-
-        container.innerHTML = `
-            <div class="bottle-detail">
-                <button class="back-btn" data-action="back-to-inbox">&larr; 주운 유리병</button>
-                <h3>${worry.author}의 이야기</h3>
-                <p class="worry-full-text">${worry.text}</p>
-                ${contentHTML}
-            </div>
-        `;
-    },
-    renderMyWorryDetail(worry) {
-        const container = document.getElementById('outbox-container');
-        const repliesHTML = worry.replies.map(reply => `
-            <div class="reply-card ${reply.isAdopted ? 'adopted' : ''}">
-                <p>"${reply.text}" - ${reply.author}</p>
-                <div class="reply-actions">
-                    <button class="adopt-btn" data-action="adopt-reply" data-worry-id="${worry.id}" data-reply-id="${reply.id}" ${reply.isAdopted ? 'disabled' : ''}>
-                        ${reply.isAdopted ? '채택됨' : '채택하기'}
-                    </button>
-                </div>
-            </div>
-        `).join('');
-
-        container.innerHTML = `
-            <div class="bottle-detail">
-                <button class="back-btn" data-action="back-to-outbox">&larr; 보낸 편지함</button>
-                <h3>내가 보낸 이야기</h3>
-                <p class="worry-full-text">${worry.text}</p>
-                <div class="replies-section">
-                    <h4>받은 온기들</h4>
-                    ${repliesHTML || '<p>아직 온기가 도착하지 않았어요.</p>'}
-                </div>
-            </div>
-        `;
-    }
-};
-
-// --- 애플리케이션 로직 ---
-const App = {
-    init() {
-        DataManager.init();
-        this.setupEventListeners();
-        const hash = window.location.hash.replace('#', '');
-        if (['sea', 'inbox', 'outbox'].includes(hash)) { state.currentPage = hash; }
-        this.updateNav();
-        UIRenderer.render();
-    },
-
-    setupEventListeners() {
-        document.querySelector('nav').addEventListener('click', e => {
-            if (e.target.tagName === 'A') { this.navigate(e.target.hash.replace('#', '')); }
-        });
-
-        const modal = document.getElementById('worry-modal');
-        document.getElementById('show-worry-modal').addEventListener('click', () => modal.style.display = 'flex');
-        document.querySelector('.modal-close-btn').addEventListener('click', () => modal.style.display = 'none');
-        document.getElementById('send-worry-bottle').addEventListener('click', this.handleSendWorry.bind(this));
-        document.getElementById('get-bottle-from-sea').addEventListener('click', this.handleGetBottle.bind(this));
-        
-        document.querySelector('main').addEventListener('click', e => {
-            const target = e.target.closest('[data-action]');
-            if (!target) return;
-
-            const action = target.dataset.action;
-            const worryId = target.dataset.worryId;
-            const replyId = target.dataset.replyId;
-
-            if (action === 'view-worry') { this.handleViewWorry(worryId); }
-            if (action === 'view-my-worry') { this.handleViewMyWorry(worryId); }
-            if (action === 'back-to-inbox') { this.navigate('inbox'); }
-            if (action === 'back-to-outbox') { this.navigate('outbox'); }
-            if (action === 'adopt-reply') { this.handleAdoptReply(worryId, replyId); }
-        });
-        
-        document.querySelector('main').addEventListener('submit', e => {
-            e.preventDefault();
-            const target = e.target.closest('[data-action]');
-            if (!target) return;
+    };
+    
+    // --- 애플리케이션 로직 ---
+    const App = {
+        init() {
+            DataManager.init();
+            this.setupEventListeners();
+            const hash = window.location.hash.replace('#', '');
+            if (['sea', 'inbox', 'outbox'].includes(hash)) { state.currentPage = hash; }
+            this.updateNav();
+            UIRenderer.render();
+        },
+    
+        setupEventListeners() {
+            document.querySelector('nav').addEventListener('click', e => {
+                if (e.target.tagName === 'A') { this.navigate(e.target.hash.replace('#', '')); }
+            });
+    
+            const modal = document.getElementById('worry-modal');
+            document.getElementById('show-worry-modal').addEventListener('click', () => modal.style.display = 'flex');
+            document.querySelector('.modal-close-btn').addEventListener('click', () => modal.style.display = 'none');
+            document.getElementById('send-worry-bottle').addEventListener('click', this.handleSendWorry.bind(this));
+            document.getElementById('get-bottle-from-sea').addEventListener('click', this.handleGetBottle.bind(this));
             
-            const action = target.dataset.action;
-            const worryId = target.dataset.worryId;
-
-            if (action === 'submit-reply') {
-                const textarea = target.querySelector('textarea');
-                this.handleSubmitReply(worryId, textarea.value);
+            document.querySelector('main').addEventListener('click', e => {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+    
+                const action = target.dataset.action;
+                const worryId = target.dataset.worryId;
+                const replyId = target.dataset.replyId;
+    
+                if (action === 'view-worry') { this.handleViewWorry(worryId); }
+                if (action === 'view-my-worry') { this.handleViewMyWorry(worryId); }
+                if (action === 'back-to-inbox') { this.navigate('inbox'); }
+                if (action === 'back-to-outbox') { this.navigate('outbox'); }
+                if (action === 'adopt-reply') { this.handleAdoptReply(worryId, replyId); }
+            });
+            
+            document.querySelector('main').addEventListener('submit', e => {
+                e.preventDefault();
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+                
+                const action = target.dataset.action;
+                const worryId = target.dataset.worryId;
+    
+                if (action === 'submit-reply') {
+                    const textarea = target.querySelector('textarea');
+                    this.handleSubmitReply(worryId, textarea.value);
+                }
+            });
+        },
+    
+        navigate(page) {
+            state.currentPage = page;
+            window.location.hash = page;
+            this.updateNav();
+            UIRenderer.render();
+        },
+    
+        updateNav() {
+            document.querySelectorAll('nav a').forEach(a => {
+                a.classList.toggle('active', a.hash.replace('#', '') === state.currentPage);
+            });
+        },
+        
+        handleViewWorry(worryId) {
+            const worry = state.user.inbox.find(w => w.id === worryId);
+            if(worry) { UIRenderer.renderWorryDetail(worry); }
+        },
+        
+        handleViewMyWorry(worryId) {
+            const worry = state.myWorries.find(w => w.id === worryId);
+            if(worry) { UIRenderer.renderMyWorryDetail(worry); }
+        },
+    
+        handleSubmitReply(worryId, text) {
+            text = text.trim();
+            if (!text) { alert('따뜻한 마음을 나눠주세요.'); return; }
+            
+            const worry = state.user.inbox.find(w => w.id === worryId);
+            if (worry) {
+                worry.replied = true;
+                worry.myReply = text; // 내가 보낸 답장 저장
+                
+                if (Math.random() < 0.5) {
+                    worry.myReplyWasAdopted = true; // 채택 상태 저장
+                    state.user.vouchers++;
+                    state.user.temperature += 0.3;
+                    alert('당신의 따뜻한 온기가 채택되어 고민권 1개와 마음의 온도가 올랐습니다!');
+                } else {
+                    alert('따뜻한 온기가 전달되었어요. (시뮬레이션)');
+                }
+                
+                DataManager.saveUser();
+                this.navigate('inbox');
             }
-        });
-    },
-
-    navigate(page) {
-        state.currentPage = page;
-        window.location.hash = page;
-        this.updateNav();
-        UIRenderer.render();
-    },
-
-    updateNav() {
-        document.querySelectorAll('nav a').forEach(a => {
-            a.classList.toggle('active', a.hash.replace('#', '') === state.currentPage);
-        });
-    },
-    
-    handleViewWorry(worryId) {
-        const worry = state.user.inbox.find(w => w.id === worryId);
-        if(worry) { UIRenderer.renderWorryDetail(worry); }
-    },
-    
-    handleViewMyWorry(worryId) {
-        const worry = state.myWorries.find(w => w.id === worryId);
-        if(worry) { UIRenderer.renderMyWorryDetail(worry); }
-    },
-
-    handleSubmitReply(worryId, text) {
-        text = text.trim();
-        if (!text) { alert('따뜻한 마음을 나눠주세요.'); return; }
-        
-        const worry = state.user.inbox.find(w => w.id === worryId);
-        if (worry) {
-            worry.replied = true;
-            worry.myReply = text; // 내가 보낸 답장 저장
-            // state.user.temperature += 0.2; // 제거: 이 행동만으로는 온도가 오르지 않음
-            
-            if (Math.random() < 0.5) {
-                state.user.vouchers++;
-                state.user.temperature += 0.3; // 채택 보상 온도
-                alert('당신의 따뜻한 온기가 채택되어 고민권 1개와 마음의 온도가 올랐습니다!');
-            } else {
-                alert('따뜻한 온기가 전달되었어요. (시뮬레이션)');
-            }
-            
-            DataManager.saveUser();
-            this.navigate('inbox');
-        }
-    },
-    
+        },    
     handleAdoptReply(worryId, replyIdToAdopt) {
         const worry = state.myWorries.find(w => w.id === worryId);
         if(!worry) return;

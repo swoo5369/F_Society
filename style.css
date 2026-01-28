@@ -222,6 +222,17 @@ h2 {
 }
 .bottle-card .card-status { margin-top: 15px; font-size: 0.9rem; color: var(--adopted-color); }
 
+.adopted-badge {
+    color: var(--adopted-color);
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-left: 10px;
+    background: rgba(255, 193, 7, 0.1);
+    padding: 3px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--adopted-color);
+}
+
 /* --- 편지 상세 보기 --- */
 .bottle-detail {
     background: var(--card-bg-color);
