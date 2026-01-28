@@ -249,11 +249,11 @@ const App = {
         if (worry) {
             worry.replied = true;
             worry.myReply = text; // 내가 보낸 답장 저장
-            state.user.temperature += 0.2;
+            // state.user.temperature += 0.2; // 제거: 이 행동만으로는 온도가 오르지 않음
             
             if (Math.random() < 0.5) {
                 state.user.vouchers++;
-                state.user.temperature += 0.3;
+                state.user.temperature += 0.3; // 채택 보상 온도
                 alert('당신의 따뜻한 온기가 채택되어 고민권 1개와 마음의 온도가 올랐습니다!');
             } else {
                 alert('따뜻한 온기가 전달되었어요. (시뮬레이션)');
@@ -272,6 +272,7 @@ const App = {
         const reply = worry.replies.find(r => r.id === replyIdToAdopt);
         if (reply) {
             reply.isAdopted = true;
+            // 보상 제거: 채택하는 행위 자체로는 고민권과 온도를 얻지 않습니다.
             DataManager.saveMyWorries();
             DataManager.saveUser();
             alert('가장 마음에 드는 온기를 채택했어요.');
@@ -317,7 +318,7 @@ const App = {
             const replyText = PRE_WRITTEN_REPLIES[Math.floor(Math.random() * PRE_WRITTEN_REPLIES.length)];
             const newReply = { id: `sim-reply-${Date.now()}`, text: replyText, author: '어느 따뜻한 마음', isAdopted: false };
             worry.replies.push(newReply);
-            state.user.temperature += 0.1;
+            // state.user.temperature += 0.1; // 제거: 이 행동만으로는 온도가 오르지 않음
             DataManager.saveMyWorries();
             DataManager.saveUser();
             if (state.currentPage === 'outbox') { UIRenderer.render(); }
