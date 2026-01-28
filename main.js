@@ -4,7 +4,7 @@
 const SEED_WORRIES = [
     { id: 'seed-1', author: '어느 여행자', text: '열심히 달려왔는데, 문득 모든 게 무의미하게 느껴질 때가 있어요. 다들 저마다의 의미를 찾은 것 같은데 저만 길을 잃은 기분이에요.', replies: [] },
     { id: 'seed-2', author: '작은 별', text: '사소한 말 한마디에 온종일 마음이 쓰여요. 다른 사람들은 쉽게 넘기는 일도 저는 왜 이렇게 어려울까요?', replies: [] },
-    { id: 'seed-3', author: '익명의 그림자', text: '새로운 시작을 앞두고 설레는 마음보다 두려운 마음이 더 커요. 잘 해낼 수 있을까요?', replies: [] },
+    { id: 'seed-3', author: '익명', text: '새로운 시작을 앞두고 설레는 마음보다 두려운 마음이 더 커요. 잘 해낼 수 있을까요?', replies: [] },
 ];
 
 const PRE_WRITTEN_REPLIES = [
@@ -91,7 +91,7 @@ const UIRenderer = {
         container.innerHTML = state.user.inbox.map(worry => `
             <div class="bottle-card" data-action="view-worry" data-worry-id="${worry.id}">
                 <p class="worry-snippet">"${worry.text}"</p>
-                <span class="card-status">${worry.replied ? '답장 완료' : '답장하기'}</span>
+                <span class="card-status">${worry.replied ? '보낸 온기 확인' : '온기 보내기'}</span>
             </div>
         `).join('');
     },
@@ -104,21 +104,38 @@ const UIRenderer = {
         container.innerHTML = state.myWorries.map(worry => `
             <div class="bottle-card" data-action="view-my-worry" data-worry-id="${worry.id}">
                 <p class="worry-snippet">"${worry.text}"</p>
-                <span class="card-status">${worry.replies.length}개의 답장 도착</span>
+                <span class="card-status">${worry.replies.length}개의 온기 도착</span>
             </div>
         `).join('');
     },
     renderWorryDetail(worry) {
         const container = document.getElementById('inbox-container');
-        container.innerHTML = `
-            <div class="bottle-detail">
-                <button class="back-btn" data-action="back-to-inbox">&larr; 받은 편지함</button>
-                <h3>${worry.author}의 이야기</h3>
-                <p class="worry-full-text">${worry.text}</p>
+        
+        let contentHTML;
+        if (worry.replied && worry.myReply) {
+            contentHTML = `
+                <div class="replies-section">
+                    <h4>내가 보낸 온기</h4>
+                    <div class="reply-card">
+                        <p>${worry.myReply}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            contentHTML = `
                 <form data-action="submit-reply" data-worry-id="${worry.id}">
                     <textarea placeholder="따뜻한 마음을 답장으로 보내주세요..."></textarea>
-                    <button type="submit" class="glowing-btn">답장 보내기</button>
+                    <button type="submit" class="glowing-btn">온기 보내기</button>
                 </form>
+            `;
+        }
+
+        container.innerHTML = `
+            <div class="bottle-detail">
+                <button class="back-btn" data-action="back-to-inbox">&larr; 주운 유리병</button>
+                <h3>${worry.author}의 이야기</h3>
+                <p class="worry-full-text">${worry.text}</p>
+                ${contentHTML}
             </div>
         `;
     },
@@ -141,8 +158,8 @@ const UIRenderer = {
                 <h3>내가 보낸 이야기</h3>
                 <p class="worry-full-text">${worry.text}</p>
                 <div class="replies-section">
-                    <h4>도착한 답장들</h4>
-                    ${repliesHTML || '<p>아직 답장이 도착하지 않았어요.</p>'}
+                    <h4>받은 온기들</h4>
+                    ${repliesHTML || '<p>아직 온기가 도착하지 않았어요.</p>'}
                 </div>
             </div>
         `;
@@ -231,16 +248,15 @@ const App = {
         const worry = state.user.inbox.find(w => w.id === worryId);
         if (worry) {
             worry.replied = true;
-            // 답장을 보내면 온도가 약간 오릅니다. (다른 사람에게 마음을 보냈으므로)
+            worry.myReply = text; // 내가 보낸 답장 저장
             state.user.temperature += 0.2;
             
-            // NEW: 50% 확률로 내가 보낸 답장이 채택되었다고 시뮬레이션
             if (Math.random() < 0.5) {
                 state.user.vouchers++;
-                state.user.temperature += 0.3; // 채택 보상 온도
-                alert('당신의 따뜻한 답장이 채택되어 고민권 1개와 마음의 온도가 올랐습니다!');
+                state.user.temperature += 0.3;
+                alert('당신의 따뜻한 온기가 채택되어 고민권 1개와 마음의 온도가 올랐습니다!');
             } else {
-                alert('따뜻한 마음이 전달되었어요. (시뮬레이션)');
+                alert('따뜻한 온기가 전달되었어요. (시뮬레이션)');
             }
             
             DataManager.saveUser();
@@ -256,12 +272,10 @@ const App = {
         const reply = worry.replies.find(r => r.id === replyIdToAdopt);
         if (reply) {
             reply.isAdopted = true;
-            // 보상 제거: 채택하는 행위 자체로는 고민권과 온도를 얻지 않습니다.
-            // 대신, 답장을 작성한 '어느 따뜻한 마음'이 보상을 받았다고 시뮬레이션됩니다.
             DataManager.saveMyWorries();
-            DataManager.saveUser(); // user state는 변경 없으나 saveUser 호출하여 consistency 유지
-            alert('가장 마음에 드는 답장을 채택했어요.');
-            this.handleViewMyWorry(worryId); // 상세 뷰 다시 렌더링
+            DataManager.saveUser();
+            alert('가장 마음에 드는 온기를 채택했어요.');
+            this.handleViewMyWorry(worryId);
         }
     },
 
@@ -307,7 +321,7 @@ const App = {
             DataManager.saveMyWorries();
             DataManager.saveUser();
             if (state.currentPage === 'outbox') { UIRenderer.render(); }
-            alert('내가 보낸 마음에 답장이 도착했어요!');
+            alert('내가 보낸 마음에 온기가 도착했어요!');
         }
     },
 };
