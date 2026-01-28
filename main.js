@@ -121,6 +121,31 @@ const UIRenderer = {
                 </form>
             </div>
         `;
+    },
+    renderMyWorryDetail(worry) {
+        const container = document.getElementById('outbox-container');
+        const repliesHTML = worry.replies.map(reply => `
+            <div class="reply-card ${reply.isAdopted ? 'adopted' : ''}">
+                <p>"${reply.text}" - ${reply.author}</p>
+                <div class="reply-actions">
+                    <button class="adopt-btn" data-action="adopt-reply" data-worry-id="${worry.id}" data-reply-id="${reply.id}" ${reply.isAdopted ? 'disabled' : ''}>
+                        ${reply.isAdopted ? '채택됨' : '채택하기'}
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = `
+            <div class="bottle-detail">
+                <button class="back-btn" data-action="back-to-outbox">&larr; 보낸 편지함</button>
+                <h3>내가 보낸 이야기</h3>
+                <p class="worry-full-text">${worry.text}</p>
+                <div class="replies-section">
+                    <h4>도착한 답장들</h4>
+                    ${repliesHTML || '<p>아직 답장이 도착하지 않았어요.</p>'}
+                </div>
+            </div>
+        `;
     }
 };
 
@@ -146,16 +171,19 @@ const App = {
         document.getElementById('send-worry-bottle').addEventListener('click', this.handleSendWorry.bind(this));
         document.getElementById('get-bottle-from-sea').addEventListener('click', this.handleGetBottle.bind(this));
         
-        // 이벤트 위임
         document.querySelector('main').addEventListener('click', e => {
             const target = e.target.closest('[data-action]');
             if (!target) return;
 
             const action = target.dataset.action;
             const worryId = target.dataset.worryId;
+            const replyId = target.dataset.replyId;
 
             if (action === 'view-worry') { this.handleViewWorry(worryId); }
+            if (action === 'view-my-worry') { this.handleViewMyWorry(worryId); }
             if (action === 'back-to-inbox') { this.navigate('inbox'); }
+            if (action === 'back-to-outbox') { this.navigate('outbox'); }
+            if (action === 'adopt-reply') { this.handleAdoptReply(worryId, replyId); }
         });
         
         document.querySelector('main').addEventListener('submit', e => {
@@ -190,6 +218,11 @@ const App = {
         const worry = state.user.inbox.find(w => w.id === worryId);
         if(worry) { UIRenderer.renderWorryDetail(worry); }
     },
+    
+    handleViewMyWorry(worryId) {
+        const worry = state.myWorries.find(w => w.id === worryId);
+        if(worry) { UIRenderer.renderMyWorryDetail(worry); }
+    },
 
     handleSubmitReply(worryId, text) {
         text = text.trim();
@@ -198,11 +231,27 @@ const App = {
         const worry = state.user.inbox.find(w => w.id === worryId);
         if (worry) {
             worry.replied = true;
-            // 시뮬레이션: 답장을 하면 온도가 약간 오릅니다.
             state.user.temperature += 0.2;
             DataManager.saveUser();
-            alert('따뜻한 마음이 전달되었어요.');
+            alert('따뜻한 마음이 전달되었어요. (시뮬레이션)');
             this.navigate('inbox');
+        }
+    },
+    
+    handleAdoptReply(worryId, replyIdToAdopt) {
+        const worry = state.myWorries.find(w => w.id === worryId);
+        if(!worry) return;
+
+        worry.replies.forEach(r => r.isAdopted = false);
+        const reply = worry.replies.find(r => r.id === replyIdToAdopt);
+        if (reply) {
+            reply.isAdopted = true;
+            state.user.vouchers++;
+            state.user.temperature += 0.5;
+            DataManager.saveMyWorries();
+            DataManager.saveUser();
+            alert('답장을 채택했어요! 보상으로 고민권 1개를 받았습니다.');
+            this.handleViewMyWorry(worryId); // Re-render the detail view
         }
     },
 
