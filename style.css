@@ -4,6 +4,7 @@
     --secondary-color: #f0e5d8;
     --text-color: #dcdcdc;
     --card-bg-color: #16213e;
+    --adopted-color: #ffc107; /* 채택된 답장을 위한 노란색 계열 */
     --font-family: 'Nanum Myeongjo', serif;
 }
 
@@ -21,6 +22,8 @@ body {
 }
 
 header {
+    width: 100%;
+    max-width: 800px;
     text-align: center;
     margin-bottom: 40px;
     color: var(--secondary-color);
@@ -30,6 +33,7 @@ h1 {
     font-size: 2.5rem;
     font-weight: normal;
     letter-spacing: 5px;
+    margin-bottom: 20px;
 }
 
 h2 {
@@ -41,12 +45,50 @@ h2 {
     margin-bottom: 20px;
 }
 
+/* --- 네비게이션 --- */
+nav {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    border: 1px solid var(--primary-color);
+    border-radius: 50px;
+    padding: 10px;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+nav a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+nav a.active,
+nav a:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+
 main {
     width: 100%;
     max-width: 800px;
     display: flex;
     flex-direction: column;
     gap: 40px;
+}
+
+/* --- 페이지 전환 --- */
+.page {
+    display: none; /* 기본적으로 모든 페이지 숨김 */
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeIn 0.5s;
+}
+.page.active {
+    display: flex; /* 활성화된 페이지만 표시 */
 }
 
 .worry-input-section {
@@ -57,9 +99,10 @@ main {
     text-align: center;
 }
 
-textarea#worry-input {
+textarea#worry-input,
+.reply-input-form textarea {
     width: 95%;
-    height: 150px;
+    height: 100px;
     background-color: var(--bg-color);
     color: var(--text-color);
     border: 1px solid var(--primary-color);
@@ -71,71 +114,99 @@ textarea#worry-input {
     margin-bottom: 20px;
 }
 
-button#submit-worry {
+button#submit-worry,
+.reply-input-form button {
     background-color: var(--primary-color);
     color: var(--secondary-color);
     border: none;
-    padding: 15px 30px;
+    padding: 10px 25px;
     border-radius: 50px;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-family: var(--font-family);
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
     box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
 }
 
-button#submit-worry:hover {
+button#submit-worry:hover,
+.reply-input-form button:hover {
     background-color: #ff5c7a;
     transform: translateY(-2px);
 }
 
-.letters-section {
-    margin-top: 20px;
-}
-
-#letters-container {
+#letters-container,
+#my-posts-container,
+#community-posts-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 30px;
 }
 
-.worry-card {
+/* --- 카드 스타일 (재사용) --- */
+.post-card {
     background-color: var(--card-bg-color);
-    border-left: 5px solid var(--primary-color);
-    border-radius: 10px;
+    border-radius: 15px;
     padding: 25px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeIn 0.8s forwards;
 }
 
-.worry-card p {
-    margin: 0;
-    line-height: 1.8;
-}
-
-.worry-card .worry-content {
+.post-card .worry-content {
+    font-size: 1.2rem;
     font-style: italic;
     color: #b0b0b0;
     margin-bottom: 20px;
     padding-bottom: 20px;
     border-bottom: 1px dashed #4a4a68;
+    line-height: 1.8;
 }
 
-.worry-card .reply-content {
-    font-size: 1.1rem;
-}
-
-.worry-card .card-footer {
+/* --- 답장(댓글) 스타일 --- */
+.replies-section {
     margin-top: 20px;
-    text-align: right;
+    padding-left: 15px;
+    border-left: 2px solid var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.capture-btn {
+.reply-card {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 10px;
+    position: relative;
+    transition: box-shadow 0.3s;
+}
+
+.reply-card p {
+    margin: 0;
+    line-height: 1.7;
+}
+
+.reply-card .reply-actions {
+    text-align: right;
+    margin-top: 15px;
+}
+
+/* --- 채택된 답장 스타일 --- */
+.reply-card.adopted {
+    box-shadow: 0 0 15px var(--adopted-color);
+    border: 1px solid var(--adopted-color);
+}
+
+.reply-card.adopted::before {
+    content: '👑'; /* 왕관 아이콘 */
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    font-size: 1.5rem;
+    transform: rotate(-15deg);
+}
+
+.adopt-btn {
     background: none;
-    border: 1px solid var(--secondary-color);
-    color: var(--secondary-color);
+    border: 1px solid var(--adopted-color);
+    color: var(--adopted-color);
     padding: 8px 15px;
     border-radius: 20px;
     cursor: pointer;
@@ -143,13 +214,28 @@ button#submit-worry:hover {
     transition: background-color 0.3s, color 0.3s;
 }
 
-.capture-btn:hover {
-    background-color: var(--secondary-color);
+.adopt-btn:hover {
+    background-color: var(--adopted-color);
     color: var(--card-bg-color);
 }
 
+.adopt-btn[disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+
+/* --- 커뮤니티 답장 폼 --- */
+.reply-input-form {
+    margin-top: 20px;
+    text-align: right;
+}
 
 @keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
     to {
         opacity: 1;
         transform: translateY(0);
@@ -163,6 +249,15 @@ button#submit-worry:hover {
 
     h1 {
         font-size: 2rem;
+    }
+
+    nav {
+        padding: 5px;
+        gap: 5px;
+    }
+
+    nav a {
+        padding: 8px 15px;
     }
 
     .worry-input-section {

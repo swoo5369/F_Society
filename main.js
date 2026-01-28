@@ -1,150 +1,274 @@
-// 1. 미리 준비된 위로의 메시지 배열
-const comfortingMessages = [
-    "그랬군요. 정말 힘드셨겠어요. 당신의 마음을 온전히 이해할 수는 없지만, 진심으로 위로를 전합니다.",
-    "이야기해주셔서 고마워요. 그 용기만으로도 당신은 이미 강한 사람이에요.",
-    "괜찮아요. 모든 것이 괜찮아질 거예요. 지금 이 순간의 감정들도 자연스러운 과정의 일부랍니다.",
-    "당신은 혼자가 아니에요. 보이지 않는 곳에서도 많은 사람들이 당신을 응원하고 있다는 걸 잊지 마세요.",
-    "오늘 하루도 정말 고생 많으셨어요. 따뜻한 차 한 잔과 함께 잠시 쉬어가세요.",
-    "결과가 어떻든, 당신이 쏟은 노력과 시간은 절대 배신하지 않아요. 그 자체로 이미 빛나는 경험이에요.",
-    "하늘의 별처럼, 당신은 그 자체로 소중하고 반짝이는 존재입니다.",
-    "지금 느끼는 감정들을 충분히 느끼고 흘려보내 주세요. 억지로 괜찮은 척하지 않아도 괜찮아요.",
-    "당신의 잘못이 아니에요. 누구에게나 힘든 날은 찾아오기 마련이니까요. 스스로를 너무 자책하지 마세요.",
-    "따뜻한 이불 속에 들어온 것처럼, 이 글이 당신에게 작은 안식처가 되었으면 좋겠습니다."
-];
+'use strict';
 
-// 2. 웹 컴포넌트 정의: <worry-card>
-class WorryCard extends HTMLElement {
-    constructor() {
-        super();
-        this.attachShadow({ mode: 'open' });
+// --- 상태 관리 ---
+const state = {
+    worries: [],
+    currentPage: 'home', // home, my-posts, community
+};
+
+// --- 데이터 관리 (LocalStorage) ---
+const DataManager = {
+    getWorries() {
+        const worriesJSON = localStorage.getItem('temperatureOfHeart');
+        if (worriesJSON) {
+            return JSON.parse(worriesJSON);
+        } else {
+            // 데이터가 없으면 초기 시드 데이터 생성
+            return this.seed();
+        }
+    },
+    saveWorries() {
+        localStorage.setItem('temperatureOfHeart', JSON.stringify(state.worries));
+    },
+    seed() {
+        const seedData = [
+            {
+                id: `worry-${Date.now()}-1`,
+                text: "요즘 부쩍 외롭다는 생각이 들어요. 다들 잘 지내는 것 같은데 저만 도태되는 기분이에요.",
+                timestamp: new Date().toISOString(),
+                isMe: false,
+                replies: [
+                    { id: `reply-${Date.now()}-1`, text: "그런 기분 정말 잘 알아요. 하지만 보이는 게 전부는 아니더라고요. 모두들 각자의 힘듦을 안고 살아가요. 당신도 충분히 잘하고 있어요.", timestamp: new Date().toISOString(), isAdopted: false },
+                    { id: `reply-${Date.now()}-2`, text: "외로움은 누구나 느끼는 감정이에요. 혼자라고 생각될 때, 이곳에 와서 이야기를 나눠보세요. 분명 마음이 따뜻해질 거예요.", timestamp: new Date().toISOString(), isAdopted: true },
+                ]
+            },
+            {
+                id: `worry-${Date.now()}-2`,
+                text: "새로운 도전을 앞두고 있는데, 잘 해낼 수 있을지 자신이 없어요. 실패할까 봐 두려워요.",
+                timestamp: new Date().toISOString(),
+                isMe: false,
+                replies: [
+                    { id: `reply-${Date.now()}-3`, text: "도전하는 것만으로도 정말 대단한 용기예요! 결과에 상관없이 그 과정은 당신에게 소중한 자산이 될 거예요. 응원할게요!", timestamp: new Date().toISOString(), isAdopted: false },
+                ]
+            }
+        ];
+        state.worries = seedData;
+        this.saveWorries();
+        return seedData;
     }
+};
 
-    connectedCallback() {
-        this.render();
-        this.shadowRoot.querySelector('.capture-btn').addEventListener('click', () => this.captureCard());
-    }
-
-    set content({ worry, reply }) {
-        this.worry = worry;
-        this.reply = reply;
-    }
-
-    captureCard() {
-        // html2canvas를 사용하여 shadowRoot 내부의 특정 요소를 캡처합니다.
-        const cardContent = this.shadowRoot.querySelector('.card-content');
-        html2canvas(cardContent, {
-            backgroundColor: '#16213e', // 카드의 배경색과 동일하게 설정
-            useCORS: true
-        }).then(canvas => {
-            const image = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = image;
-            link.download = '마음의_온도_답장.png';
-            link.click();
-        });
-    }
-
+// --- UI 렌더링 ---
+const UIRenderer = {
     render() {
-        this.shadowRoot.innerHTML = `
-            <style>
-                :host {
-                    display: block;
-                    width: 100%;
-                    box-sizing: border-box;
-                }
-                .card-content {
-                    background-color: var(--card-bg-color, #16213e);
-                    border-left: 5px solid var(--primary-color, #e94560);
-                    border-radius: 10px;
-                    padding: 25px;
-                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                    opacity: 0;
-                    transform: translateY(20px);
-                    animation: fadeIn 0.8s forwards;
-                    font-family: var(--font-family, 'Nanum Myeongjo', serif);
-                    color: var(--text-color, #dcdcdc);
-                }
-                .worry-content {
-                    font-style: italic;
-                    color: #b0b0b0;
-                    margin-bottom: 20px;
-                    padding-bottom: 20px;
-                    border-bottom: 1px dashed #4a4a68;
-                    line-height: 1.8;
-                }
-                .reply-content {
-                    font-size: 1.1rem;
-                    line-height: 1.8;
-                }
-                .card-footer {
-                    margin-top: 20px;
-                    text-align: right;
-                }
-                .capture-btn {
-                    background: none;
-                    border: 1px solid var(--secondary-color, #f0e5d8);
-                    color: var(--secondary-color, #f0e5d8);
-                    padding: 8px 15px;
-                    border-radius: 20px;
-                    cursor: pointer;
-                    font-family: var(--font-family, 'Nanum Myeongjo', serif);
-                    transition: background-color 0.3s, color 0.3s;
-                }
-                .capture-btn:hover {
-                    background-color: var(--secondary-color, #f0e5d8);
-                    color: var(--card-bg-color, #16213e);
-                }
-                @keyframes fadeIn {
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-            </style>
-            <div class="card-content">
-                <p class="worry-content">"${this.worry}"</p>
-                <p class="reply-content">${this.reply}</p>
-                <div class="card-footer">
-                    <button class="capture-btn">이미지로 저장</button>
+        // 모든 페이지 숨기기
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        // 현재 페이지 표시
+        const currentPageEl = document.getElementById(`${state.currentPage}-page`);
+        if (currentPageEl) {
+            currentPageEl.classList.add('active');
+        }
+
+        switch (state.currentPage) {
+            case 'my-posts':
+                this.renderMyPostsPage();
+                break;
+            case 'community':
+                this.renderCommunityPage();
+                break;
+            case 'home':
+            default:
+                this.renderHomePage();
+                break;
+        }
+    },
+
+    renderHomePage() {
+        // 홈 페이지는 기본 HTML 구조를 사용하므로 특별한 렌더링이 필요 없을 수 있음
+        // 하지만 동적으로 생성된 컨텐츠가 있다면 여기에 로직 추가
+        const lettersContainer = document.getElementById('letters-container');
+        lettersContainer.innerHTML = '<h2>📝 최근 남겨진 온기</h2> <p>고민을 남기면 이곳에 다른 사람들의 따뜻한 마음이 도착할 거예요.</p>';
+    },
+
+    renderMyPostsPage() {
+        const container = document.getElementById('my-posts-container');
+        const myWorries = state.worries.filter(w => w.isMe).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        if (myWorries.length === 0) {
+            container.innerHTML = '<p>아직 작성한 고민이 없어요. 홈에서 당신의 이야기를 들려주세요.</p>';
+            return;
+        }
+
+        container.innerHTML = myWorries.map(worry => this.createPostHTML(worry, true)).join('');
+    },
+
+    renderCommunityPage() {
+        const container = document.getElementById('community-posts-container');
+        const communityWorries = state.worries.filter(w => !w.isMe).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        if (communityWorries.length === 0) {
+            container.innerHTML = '<p>다른 사람들의 이야기가 아직 없네요.</p>';
+            return;
+        }
+        
+        container.innerHTML = communityWorries.map(worry => this.createPostHTML(worry, false)).join('');
+    },
+    
+    createPostHTML(worry, isMyPost) {
+        const repliesHTML = worry.replies.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(reply => `
+            <div class="reply-card ${reply.isAdopted ? 'adopted' : ''}" data-reply-id="${reply.id}">
+                <p>${reply.text}</p>
+                <div class="reply-actions">
+                    ${isMyPost ? `<button class="adopt-btn" data-action="adopt-reply" data-worry-id="${worry.id}" data-reply-id="${reply.id}" ${reply.isAdopted ? 'disabled' : ''}>${reply.isAdopted ? '채택됨' : '채택하기'}</button>` : ''}
                 </div>
+            </div>
+        `).join('');
+
+        const replyFormHTML = !isMyPost ? `
+            <form class="reply-input-form" data-action="submit-reply" data-worry-id="${worry.id}">
+                <textarea placeholder="따뜻한 마음을 나눠주세요..."></textarea>
+                <button type="submit">답장 남기기</button>
+            </form>
+        ` : '';
+
+        return `
+            <div class="post-card" data-worry-id="${worry.id}">
+                <p class="worry-content">${worry.text}</p>
+                <div class="replies-section">
+                    ${repliesHTML || '<p style="opacity: 0.7; text-align:center;">아직 도착한 마음이 없어요.</p>'}
+                </div>
+                ${replyFormHTML}
             </div>
         `;
     }
-}
-customElements.define('worry-card', WorryCard);
+};
 
-
-// 3. DOM 로드 후 실행
-document.addEventListener('DOMContentLoaded', () => {
-    const worryInput = document.getElementById('worry-input');
-    const submitWorryBtn = document.getElementById('submit-worry');
-    const lettersContainer = document.getElementById('letters-container');
-
-    // 4. '온기 보내기' 버튼 클릭 이벤트
-    submitWorryBtn.addEventListener('click', () => {
-        const worryText = worryInput.value.trim();
-
-        if (worryText) {
-            // 5. 랜덤 답장 선택 및 카드 생성
-            const randomReply = comfortingMessages[Math.floor(Math.random() * comfortingMessages.length)];
-            
-            const newCard = document.createElement('worry-card');
-            newCard.content = {
-                worry: worryText,
-                reply: randomReply
-            };
-            
-            // 새로운 카드를 맨 위에 추가
-            lettersContainer.prepend(newCard);
-
-            // 입력창 초기화
-            worryInput.value = '';
-
-            // 부드럽게 스크롤
-            newCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-        } else {
-            alert("당신의 이야기를 들려주세요.");
+// --- 애플리케이션 로직 ---
+const App = {
+    init() {
+        state.worries = DataManager.getWorries();
+        this.setupEventListeners();
+        
+        // URL 해시를 기반으로 초기 페이지 설정
+        const hash = window.location.hash.replace('#', '');
+        if (['home', 'my-posts', 'community'].includes(hash)) {
+            state.currentPage = hash;
         }
-    });
+        
+        UIRenderer.render();
+        this.updateNav();
+    },
+
+    setupEventListeners() {
+        // 네비게이션
+        const nav = document.querySelector('nav');
+        nav.addEventListener('click', e => {
+            if (e.target.tagName === 'A') {
+                const page = e.target.hash.replace('#', '');
+                this.navigate(page);
+            }
+        });
+
+        // 메인 컨텐츠 영역의 이벤트 위임
+        const main = document.querySelector('main');
+        main.addEventListener('click', e => {
+            const target = e.target;
+            const action = target.dataset.action || (target.closest('form') ? target.closest('form').dataset.action : null);
+
+            if (action === 'adopt-reply') {
+                const worryId = target.dataset.worryId;
+                const replyId = target.dataset.replyId;
+                this.handleAdoptReply(worryId, replyId);
+            }
+        });
+
+        main.addEventListener('submit', e => {
+             const target = e.target;
+             const action = target.dataset.action;
+
+            if (action === 'submit-reply') {
+                e.preventDefault();
+                const worryId = target.dataset.worryId;
+                const textarea = target.querySelector('textarea');
+                this.handleReplySubmit(worryId, textarea.value);
+                textarea.value = '';
+            }
+        });
+        
+        // 홈 페이지 고민 제출
+        const worrySubmitBtn = document.getElementById('submit-worry');
+        worrySubmitBtn.addEventListener('click', () => {
+             const input = document.getElementById('worry-input');
+             this.handleWorrySubmit(input.value);
+             input.value = '';
+        });
+    },
+
+    navigate(page) {
+        state.currentPage = page;
+        window.location.hash = page;
+        this.updateNav();
+        UIRenderer.render();
+    },
+
+    updateNav() {
+        document.querySelectorAll('nav a').forEach(a => {
+            if (a.hash.replace('#', '') === state.currentPage) {
+                a.classList.add('active');
+            } else {
+                a.classList.remove('active');
+            }
+        });
+    },
+
+    handleWorrySubmit(text) {
+        text = text.trim();
+        if (!text) {
+            alert('이야기를 들려주세요.');
+            return;
+        }
+        const newWorry = {
+            id: `worry-${Date.now()}`,
+            text,
+            timestamp: new Date().toISOString(),
+            isMe: true,
+            replies: []
+        };
+        state.worries.push(newWorry);
+        DataManager.saveWorries();
+        alert('당신의 이야기가 기록되었어요. "내 고민" 페이지에서 확인해보세요.');
+        this.navigate('my-posts');
+    },
+
+    handleReplySubmit(worryId, text) {
+        text = text.trim();
+        if (!text) {
+            alert('따뜻한 마음을 나눠주세요.');
+            return;
+        }
+        const worry = state.worries.find(w => w.id === worryId);
+        if (worry) {
+            const newReply = {
+                id: `reply-${Date.now()}`,
+                text,
+                timestamp: new Date().toISOString(),
+                isAdopted: false,
+            };
+            worry.replies.push(newReply);
+            DataManager.saveWorries();
+            UIRenderer.render(); // 현재 뷰 다시 렌더링
+        }
+    },
+
+    handleAdoptReply(worryId, replyIdToAdopt) {
+        const worry = state.worries.find(w => w.id === worryId);
+        if (worry) {
+            // 모든 답장의 채택 상태를 false로 초기화
+            worry.replies.forEach(reply => {
+                reply.isAdopted = false;
+            });
+            // 선택된 답장만 채택 상태로 변경
+            const replyToAdopt = worry.replies.find(r => r.id === replyIdToAdopt);
+            if (replyToAdopt) {
+                replyToAdopt.isAdopted = true;
+            }
+            DataManager.saveWorries();
+            UIRenderer.render(); // 현재 뷰 다시 렌더링
+        }
+    }
+};
+
+// --- 앱 초기화 ---
+document.addEventListener('DOMContentLoaded', () => {
+    App.init();
 });

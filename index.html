@@ -15,17 +15,58 @@
         <h1>마음의 온도</h1>
     </header>
 
-    <main>
-        <section class="worry-input-section">
-            <h2>당신의 마음은 어떤가요?</h2>
-            <textarea id="worry-input" placeholder="이곳에 당신의 이야기를 들려주세요..."></textarea>
-            <button id="submit-worry">온기 보내기</button>
-        </section>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>마음의 온도</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo&display=swap" rel="stylesheet">
+    <link href="/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>마음의 온도</h1>
+        <nav>
+            <a href="#home" id="nav-home" class="active">홈</a>
+            <a href="#my-posts" id="nav-my-posts">내 고민</a>
+            <a href="#community" id="nav-community">커뮤니티</a>
+        </nav>
+    </header>
 
-        <section id="letters-container" class="letters-section">
-            <h2>누군가의 따뜻한 마음</h2>
-        </section>
+    <main>
+        <!-- 홈 페이지 -->
+        <div id="home-page" class="page active">
+            <section class="worry-input-section">
+                <h2>당신의 마음은 어떤가요?</h2>
+                <textarea id="worry-input" placeholder="이곳에 당신의 이야기를 들려주세요..."></textarea>
+                <button id="submit-worry">온기 보내기</button>
+            </section>
+            <section id="letters-container" class="letters-section">
+                <!-- 기존에 작성된 고민에 대한 답장이 여기에 표시될 수 있습니다. -->
+            </section>
+        </div>
+
+        <!-- 내 고민 페이지 -->
+        <div id="my-posts-page" class="page">
+            <h2>내 고민 목록</h2>
+            <div id="my-posts-container"></div>
+        </div>
+
+        <!-- 커뮤니티 페이지 -->
+        <div id="community-page" class="page">
+            <h2>다른 사람들의 이야기</h2>
+            <div id="community-posts-container"></div>
+        </div>
     </main>
+
+    <script defer type="text/javascript" src="/main.js"></script>
+</body>
+</html>
+
 
     <script defer type="text/javascript" src="/main.js"></script>
 </body>
