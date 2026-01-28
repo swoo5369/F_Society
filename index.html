@@ -1,14 +1,32 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>마음의 온도</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo&display=swap" rel="stylesheet">
+    <link href="/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+    <header>
+        <h1>마음의 온도</h1>
+    </header>
+
+    <main>
+        <section class="worry-input-section">
+            <h2>당신의 마음은 어떤가요?</h2>
+            <textarea id="worry-input" placeholder="이곳에 당신의 이야기를 들려주세요..."></textarea>
+            <button id="submit-worry">온기 보내기</button>
+        </section>
+
+        <section id="letters-container" class="letters-section">
+            <h2>누군가의 따뜻한 마음</h2>
+        </section>
+    </main>
+
+    <script defer type="text/javascript" src="/main.js"></script>
 </body>
 </html>

@@ -1,1 +1,175 @@
-/* Add styles here */
+:root {
+    --bg-color: #1a1a2e;
+    --primary-color: #e94560;
+    --secondary-color: #f0e5d8;
+    --text-color: #dcdcdc;
+    --card-bg-color: #16213e;
+    --font-family: 'Nanum Myeongjo', serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: var(--secondary-color);
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: normal;
+    letter-spacing: 5px;
+}
+
+h2 {
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+    font-weight: normal;
+    border-bottom: 1px solid var(--primary-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+main {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.worry-input-section {
+    background-color: var(--card-bg-color);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+textarea#worry-input {
+    width: 95%;
+    height: 150px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 10px;
+    padding: 15px;
+    font-family: var(--font-family);
+    font-size: 1.1rem;
+    resize: vertical;
+    margin-bottom: 20px;
+}
+
+button#submit-worry {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+}
+
+button#submit-worry:hover {
+    background-color: #ff5c7a;
+    transform: translateY(-2px);
+}
+
+.letters-section {
+    margin-top: 20px;
+}
+
+#letters-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.worry-card {
+    background-color: var(--card-bg-color);
+    border-left: 5px solid var(--primary-color);
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeIn 0.8s forwards;
+}
+
+.worry-card p {
+    margin: 0;
+    line-height: 1.8;
+}
+
+.worry-card .worry-content {
+    font-style: italic;
+    color: #b0b0b0;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed #4a4a68;
+}
+
+.worry-card .reply-content {
+    font-size: 1.1rem;
+}
+
+.worry-card .card-footer {
+    margin-top: 20px;
+    text-align: right;
+}
+
+.capture-btn {
+    background: none;
+    border: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: var(--font-family);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.capture-btn:hover {
+    background-color: var(--secondary-color);
+    color: var(--card-bg-color);
+}
+
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .worry-input-section {
+        padding: 20px;
+    }
+
+    textarea#worry-input {
+        height: 120px;
+    }
+}
