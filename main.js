@@ -32,35 +32,26 @@ const DataManager = {
     },
     getUser() {
         const userJSON = localStorage.getItem('bottle_user');
-        if (userJSON) {
-            return JSON.parse(userJSON);
-        }
+        if (userJSON) { return JSON.parse(userJSON); }
         const newUser = {
-            temperature: 36.5,
-            vouchers: 1,
-            lastLoginDate: new Date().toDateString(),
-            unlockedSkins: ['default'],
-            inbox: [], // 받은 편지함
+            temperature: 36.5, vouchers: 1, lastLoginDate: new Date().toDateString(),
+            unlockedSkins: ['default'], inbox: [],
         };
         localStorage.setItem('bottle_user', JSON.stringify(newUser));
         return newUser;
     },
-    saveUser() {
-        localStorage.setItem('bottle_user', JSON.stringify(state.user));
-    },
+    saveUser() { localStorage.setItem('bottle_user', JSON.stringify(state.user)); },
     checkDailyVoucher() {
         const today = new Date().toDateString();
         if (state.user.lastLoginDate !== today) {
-            state.user.vouchers = Math.min(state.user.vouchers + 1, 5); // 최대 5개
+            state.user.vouchers = Math.min(state.user.vouchers + 1, 5);
             state.user.lastLoginDate = today;
             this.saveUser();
         }
     },
     getCommunityWorries() {
         const worriesJSON = localStorage.getItem('bottle_community_worries');
-        if (worriesJSON) {
-            return JSON.parse(worriesJSON);
-        }
+        if (worriesJSON) { return JSON.parse(worriesJSON); }
         localStorage.setItem('bottle_community_worries', JSON.stringify(SEED_WORRIES));
         return SEED_WORRIES;
     },
@@ -68,9 +59,7 @@ const DataManager = {
         const worriesJSON = localStorage.getItem('bottle_my_worries');
         return worriesJSON ? JSON.parse(worriesJSON) : [];
     },
-    saveMyWorries() {
-        localStorage.setItem('bottle_my_worries', JSON.stringify(state.myWorries));
-    },
+    saveMyWorries() { localStorage.setItem('bottle_my_worries', JSON.stringify(state.myWorries)); },
 };
 
 // --- UI 렌더링 ---
@@ -79,15 +68,12 @@ const UIRenderer = {
         this.renderUserStatus();
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
         const currentPageEl = document.getElementById(`${state.currentPage}-page`);
-        if (currentPageEl) {
-            currentPageEl.classList.add('active');
-        }
+        if (currentPageEl) { currentPageEl.classList.add('active'); }
 
         switch (state.currentPage) {
             case 'inbox': this.renderInbox(); break;
             case 'outbox': this.renderOutbox(); break;
-            case 'sea':
-            default: this.renderSea(); break;
+            case 'sea': default: this.renderSea(); break;
         }
     },
     renderUserStatus() {
@@ -95,7 +81,7 @@ const UIRenderer = {
         document.getElementById('user-vouchers').textContent = `고민권: ${state.user.vouchers}개`;
         document.getElementById('show-worry-modal').disabled = state.user.vouchers <= 0;
     },
-    renderSea() { /* 현재는 정적 컨텐츠 */ },
+    renderSea() { /* 정적 컨텐츠 */ },
     renderInbox() {
         const container = document.getElementById('inbox-container');
         if(state.user.inbox.length === 0){
@@ -111,7 +97,7 @@ const UIRenderer = {
     },
     renderOutbox() {
         const container = document.getElementById('outbox-container');
-         if(state.myWorries.length === 0){
+        if(state.myWorries.length === 0){
             container.innerHTML = '<p>아직 바다에 띄운 마음이 없어요.</p>';
             return;
         }
@@ -122,7 +108,20 @@ const UIRenderer = {
             </div>
         `).join('');
     },
-    // 상세 보기 렌더링은 App 로직에서 처리
+    renderWorryDetail(worry) {
+        const container = document.getElementById('inbox-container');
+        container.innerHTML = `
+            <div class="bottle-detail">
+                <button class="back-btn" data-action="back-to-inbox">&larr; 받은 편지함</button>
+                <h3>${worry.author}의 이야기</h3>
+                <p class="worry-full-text">${worry.text}</p>
+                <form data-action="submit-reply" data-worry-id="${worry.id}">
+                    <textarea placeholder="따뜻한 마음을 답장으로 보내주세요..."></textarea>
+                    <button type="submit" class="glowing-btn">답장 보내기</button>
+                </form>
+            </div>
+        `;
+    }
 };
 
 // --- 애플리케이션 로직 ---
@@ -131,18 +130,14 @@ const App = {
         DataManager.init();
         this.setupEventListeners();
         const hash = window.location.hash.replace('#', '');
-        if (['sea', 'inbox', 'outbox'].includes(hash)) {
-            state.currentPage = hash;
-        }
+        if (['sea', 'inbox', 'outbox'].includes(hash)) { state.currentPage = hash; }
         this.updateNav();
         UIRenderer.render();
     },
 
     setupEventListeners() {
         document.querySelector('nav').addEventListener('click', e => {
-            if (e.target.tagName === 'A') {
-                this.navigate(e.target.hash.replace('#', ''));
-            }
+            if (e.target.tagName === 'A') { this.navigate(e.target.hash.replace('#', '')); }
         });
 
         const modal = document.getElementById('worry-modal');
@@ -150,6 +145,32 @@ const App = {
         document.querySelector('.modal-close-btn').addEventListener('click', () => modal.style.display = 'none');
         document.getElementById('send-worry-bottle').addEventListener('click', this.handleSendWorry.bind(this));
         document.getElementById('get-bottle-from-sea').addEventListener('click', this.handleGetBottle.bind(this));
+        
+        // 이벤트 위임
+        document.querySelector('main').addEventListener('click', e => {
+            const target = e.target.closest('[data-action]');
+            if (!target) return;
+
+            const action = target.dataset.action;
+            const worryId = target.dataset.worryId;
+
+            if (action === 'view-worry') { this.handleViewWorry(worryId); }
+            if (action === 'back-to-inbox') { this.navigate('inbox'); }
+        });
+        
+        document.querySelector('main').addEventListener('submit', e => {
+            e.preventDefault();
+            const target = e.target.closest('[data-action]');
+            if (!target) return;
+            
+            const action = target.dataset.action;
+            const worryId = target.dataset.worryId;
+
+            if (action === 'submit-reply') {
+                const textarea = target.querySelector('textarea');
+                this.handleSubmitReply(worryId, textarea.value);
+            }
+        });
     },
 
     navigate(page) {
@@ -164,6 +185,26 @@ const App = {
             a.classList.toggle('active', a.hash.replace('#', '') === state.currentPage);
         });
     },
+    
+    handleViewWorry(worryId) {
+        const worry = state.user.inbox.find(w => w.id === worryId);
+        if(worry) { UIRenderer.renderWorryDetail(worry); }
+    },
+
+    handleSubmitReply(worryId, text) {
+        text = text.trim();
+        if (!text) { alert('따뜻한 마음을 나눠주세요.'); return; }
+        
+        const worry = state.user.inbox.find(w => w.id === worryId);
+        if (worry) {
+            worry.replied = true;
+            // 시뮬레이션: 답장을 하면 온도가 약간 오릅니다.
+            state.user.temperature += 0.2;
+            DataManager.saveUser();
+            alert('따뜻한 마음이 전달되었어요.');
+            this.navigate('inbox');
+        }
+    },
 
     handleSendWorry() {
         const input = document.getElementById('worry-input');
@@ -172,12 +213,7 @@ const App = {
         if (state.user.vouchers <= 0) { alert('고민권이 부족해요.'); return; }
 
         state.user.vouchers--;
-        const newWorry = {
-            id: `my-${Date.now()}`,
-            text,
-            timestamp: new Date().toISOString(),
-            replies: [],
-        };
+        const newWorry = { id: `my-${Date.now()}`, text, timestamp: new Date().toISOString(), replies: [] };
         state.myWorries.push(newWorry);
         DataManager.saveMyWorries();
         DataManager.saveUser();
@@ -186,8 +222,6 @@ const App = {
         document.getElementById('worry-modal').style.display = 'none';
         alert('당신의 마음을 바다에 띄워보냈어요.');
         this.navigate('outbox');
-
-        // 답장 시뮬레이션
         setTimeout(() => this.simulateReply(newWorry.id), 5000);
     },
 
@@ -208,27 +242,15 @@ const App = {
         const worry = state.myWorries.find(w => w.id === myWorryId);
         if (worry) {
             const replyText = PRE_WRITTEN_REPLIES[Math.floor(Math.random() * PRE_WRITTEN_REPLIES.length)];
-            const newReply = {
-                id: `sim-reply-${Date.now()}`,
-                text: replyText,
-                author: '어느 따뜻한 마음',
-                isAdopted: false,
-            };
+            const newReply = { id: `sim-reply-${Date.now()}`, text: replyText, author: '어느 따뜻한 마음', isAdopted: false };
             worry.replies.push(newReply);
-            state.user.temperature += 0.1; // 온기 상승
+            state.user.temperature += 0.1;
             DataManager.saveMyWorries();
             DataManager.saveUser();
-            // 현재 outbox에 있다면 다시 렌더링
-            if (state.currentPage === 'outbox') {
-                UIRenderer.render();
-            }
+            if (state.currentPage === 'outbox') { UIRenderer.render(); }
             alert('내가 보낸 마음에 답장이 도착했어요!');
         }
     },
-    // 답장하기, 채택하기 등 상세 로직은 향후 확장
 };
 
-// --- 앱 초기화 ---
-document.addEventListener('DOMContentLoaded', () => {
-    App.init();
-});
+document.addEventListener('DOMContentLoaded', () => App.init());
