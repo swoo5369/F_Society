@@ -1,60 +1,54 @@
 :root {
-    --bg-color: #1a1a2e;
-    --primary-color: #e94560;
+    --bg-gradient-start: #0f0c29;
+    --bg-gradient-mid: #302b63;
+    --bg-gradient-end: #24243e;
+    --primary-glow-color: #00bcd4;
     --secondary-color: #f0e5d8;
     --text-color: #dcdcdc;
-    --card-bg-color: #16213e;
-    --adopted-color: #ffc107; /* 채택된 답장을 위한 노란색 계열 */
+    --card-bg-color: rgba(22, 33, 62, 0.8);
+    --adopted-color: #ffc107;
     --font-family: 'Nanum Myeongjo', serif;
 }
 
 body {
-    background-color: var(--bg-color);
+    background: linear-gradient(to bottom, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
     color: var(--text-color);
     font-family: var(--font-family);
     margin: 0;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     min-height: 100vh;
     box-sizing: border-box;
 }
 
-header {
+#app-container {
     width: 100%;
     max-width: 800px;
-    text-align: center;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+header {
+    padding: 15px;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 15px;
     margin-bottom: 40px;
+}
+
+.user-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px 15px 20px;
     color: var(--secondary-color);
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 15px;
 }
 
-h1 {
-    font-size: 2.5rem;
-    font-weight: normal;
-    letter-spacing: 5px;
-    margin-bottom: 20px;
-}
-
-h2 {
-    font-size: 1.5rem;
-    color: var(--secondary-color);
-    font-weight: normal;
-    border-bottom: 1px solid var(--primary-color);
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-}
-
-/* --- 네비게이션 --- */
 nav {
     display: flex;
     justify-content: center;
     gap: 15px;
-    border: 1px solid var(--primary-color);
-    border-radius: 50px;
-    padding: 10px;
-    margin: 0 auto;
-    width: fit-content;
 }
 
 nav a {
@@ -63,49 +57,132 @@ nav a {
     padding: 10px 20px;
     border-radius: 30px;
     transition: background-color 0.3s, color 0.3s;
+    border: 1px solid transparent;
 }
 
 nav a.active,
 nav a:hover {
-    background-color: var(--primary-color);
-    color: #fff;
+    background-color: rgba(255,255,255,0.1);
+    border-color: var(--primary-glow-color);
 }
 
-
-main {
-    width: 100%;
-    max-width: 800px;
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
+h2 {
+    font-size: 1.8rem;
+    color: var(--secondary-color);
+    font-weight: normal;
+    text-align: center;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
 }
 
-/* --- 페이지 전환 --- */
 .page {
-    display: none; /* 기본적으로 모든 페이지 숨김 */
+    display: none;
     flex-direction: column;
     gap: 20px;
-    animation: fadeIn 0.5s;
+    animation: fadeIn 0.8s;
 }
 .page.active {
-    display: flex; /* 활성화된 페이지만 표시 */
+    display: flex;
 }
 
-.worry-input-section {
-    background-color: var(--card-bg-color);
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+/* --- 바다 페이지 --- */
+#sea-page .sea-content {
     text-align: center;
+    padding: 80px 20px;
+}
+#sea-page h1 {
+    font-size: 2.5rem;
+    color: var(--secondary-color);
+    margin-bottom: 20px;
+}
+#sea-page p {
+    font-size: 1.2rem;
+    line-height: 1.7;
+    color: var(--text-color);
+    margin-bottom: 40px;
 }
 
-textarea#worry-input,
-.reply-input-form textarea {
-    width: 95%;
-    height: 100px;
-    background-color: var(--bg-color);
+/* --- 버튼 스타일 --- */
+.glowing-btn {
+    background-color: var(--primary-glow-color);
+    color: #fff;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 1.2rem;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px var(--primary-glow-color), 0 0 20px var(--primary-glow-color), 0 0 30px var(--primary-glow-color);
+}
+.glowing-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px var(--primary-glow-color), 0 0 30px var(--primary-glow-color), 0 0 45px var(--primary-glow-color);
+}
+.glowing-btn:disabled {
+    background-color: #555;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+#get-bottle-from-sea {
+    background: none;
+    border: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
+    padding: 12px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: var(--font-family);
+    transition: all 0.3s;
+    margin-top: 20px;
+}
+#get-bottle-from-sea:hover {
+     background-color: var(--secondary-color);
+     color: var(--bg-gradient-start);
+}
+
+/* --- 모달 --- */
+.modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    animation: fadeIn 0.3s;
+}
+.modal-content {
+    background-color: var(--card-bg-color);
+    padding: 40px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: 1px solid var(--primary-glow-color);
+}
+.modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 2rem;
+    cursor: pointer;
+}
+.modal-content textarea {
+    width: 100%;
+    box-sizing: border-box;
+    height: 200px;
+    background-color: rgba(0,0,0,0.3);
     color: var(--text-color);
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--primary-glow-color);
     border-radius: 10px;
     padding: 15px;
     font-family: var(--font-family);
@@ -113,158 +190,60 @@ textarea#worry-input,
     resize: vertical;
     margin-bottom: 20px;
 }
-
-button#submit-worry,
-.reply-input-form button {
-    background-color: var(--primary-color);
-    color: var(--secondary-color);
-    border: none;
-    padding: 10px 25px;
-    border-radius: 50px;
-    font-size: 1rem;
-    font-family: var(--font-family);
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-    box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+.modal-content .glowing-btn {
+    width: 100%;
 }
 
-button#submit-worry:hover,
-.reply-input-form button:hover {
-    background-color: #ff5c7a;
-    transform: translateY(-2px);
-}
-
-#letters-container,
-#my-posts-container,
-#community-posts-container {
+/* --- 편지함(Inbox/Outbox) --- */
+#inbox-container, #outbox-container {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 20px;
 }
 
-/* --- 카드 스타일 (재사용) --- */
-.post-card {
+.bottle-card {
     background-color: var(--card-bg-color);
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.post-card .worry-content {
-    font-size: 1.2rem;
-    font-style: italic;
-    color: #b0b0b0;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px dashed #4a4a68;
-    line-height: 1.8;
-}
-
-/* --- 답장(댓글) 스타일 --- */
-.replies-section {
-    margin-top: 20px;
-    padding-left: 15px;
-    border-left: 2px solid var(--primary-color);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.reply-card {
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 20px;
     border-radius: 10px;
-    position: relative;
-    transition: box-shadow 0.3s;
-}
-
-.reply-card p {
-    margin: 0;
-    line-height: 1.7;
-}
-
-.reply-card .reply-actions {
-    text-align: right;
-    margin-top: 15px;
-}
-
-/* --- 채택된 답장 스타일 --- */
-.reply-card.adopted {
-    box-shadow: 0 0 15px var(--adopted-color);
-    border: 1px solid var(--adopted-color);
-}
-
-.reply-card.adopted::before {
-    content: '👑'; /* 왕관 아이콘 */
-    position: absolute;
-    top: -10px;
-    left: -10px;
-    font-size: 1.5rem;
-    transform: rotate(-15deg);
-}
-
-.adopt-btn {
-    background: none;
-    border: 1px solid var(--adopted-color);
-    color: var(--adopted-color);
-    padding: 8px 15px;
-    border-radius: 20px;
+    border-left: 3px solid var(--primary-glow-color);
+    padding: 25px;
     cursor: pointer;
-    font-family: var(--font-family);
-    transition: background-color 0.3s, color 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
 }
-
-.adopt-btn:hover {
-    background-color: var(--adopted-color);
-    color: var(--card-bg-color);
+.bottle-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
-
-.adopt-btn[disabled] {
-    cursor: not-allowed;
-    opacity: 0.5;
+.bottle-card .worry-snippet, .bottle-card .reply-snippet {
+    font-style: italic;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-
-
-/* --- 커뮤니티 답장 폼 --- */
-.reply-input-form {
-    margin-top: 20px;
-    text-align: right;
+.bottle-card .card-status {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: var(--adopted-color);
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @media (max-width: 600px) {
-    body {
-        padding: 15px;
+    #app-container {
+        padding: 10px;
     }
-
-    h1 {
+    .user-status {
+        font-size: 1rem;
+        padding: 0 10px 10px 10px;
+    }
+    #sea-page h1 {
         font-size: 2rem;
     }
-
-    nav {
-        padding: 5px;
-        gap: 5px;
-    }
-
-    nav a {
-        padding: 8px 15px;
-    }
-
-    .worry-input-section {
-        padding: 20px;
-    }
-
-    textarea#worry-input {
-        height: 120px;
+    .modal-content {
+        width: 95%;
+        padding: 30px 20px;
     }
 }

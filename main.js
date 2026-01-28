@@ -1,197 +1,155 @@
 'use strict';
 
+// --- 초기 데이터 및 설정 ---
+const SEED_WORRIES = [
+    { id: 'seed-1', author: '어느 여행자', text: '열심히 달려왔는데, 문득 모든 게 무의미하게 느껴질 때가 있어요. 다들 저마다의 의미를 찾은 것 같은데 저만 길을 잃은 기분이에요.', replies: [] },
+    { id: 'seed-2', author: '작은 별', text: '사소한 말 한마디에 온종일 마음이 쓰여요. 다른 사람들은 쉽게 넘기는 일도 저는 왜 이렇게 어려울까요?', replies: [] },
+    { id: 'seed-3', author: '익명의 그림자', text: '새로운 시작을 앞두고 설레는 마음보다 두려운 마음이 더 커요. 잘 해낼 수 있을까요?', replies: [] },
+];
+
+const PRE_WRITTEN_REPLIES = [
+    '그 마음, 저도 알 것 같아요. 잠시 쉬어가도 괜찮아요. 당신의 속도대로 천천히 나아가면 돼요.',
+    '이야기해주셔서 고마워요. 당신의 용기가 누군가에게는 큰 위로가 될 거예요.',
+    '결과가 어떻든, 당신의 모든 노력은 별처럼 반짝이고 있어요. 스스로를 믿어주세요.',
+    '그런 감정은 지극히 자연스러운 거예요. 혼자 끙끙 앓지 않아도 괜찮아요.',
+];
+
 // --- 상태 관리 ---
 const state = {
-    worries: [],
-    currentPage: 'home', // home, my-posts, community
+    user: null,
+    communityWorries: [],
+    myWorries: [],
+    currentPage: 'sea', // sea, inbox, outbox
 };
 
-// --- 데이터 관리 (LocalStorage) ---
+// --- 데이터 관리 ---
 const DataManager = {
-    getWorries() {
-        const worriesJSON = localStorage.getItem('temperatureOfHeart');
-        if (worriesJSON) {
-            return JSON.parse(worriesJSON);
-        } else {
-            // 데이터가 없으면 초기 시드 데이터 생성
-            return this.seed();
+    init() {
+        state.user = this.getUser();
+        state.communityWorries = this.getCommunityWorries();
+        state.myWorries = this.getMyWorries();
+        this.checkDailyVoucher();
+    },
+    getUser() {
+        const userJSON = localStorage.getItem('bottle_user');
+        if (userJSON) {
+            return JSON.parse(userJSON);
+        }
+        const newUser = {
+            temperature: 36.5,
+            vouchers: 1,
+            lastLoginDate: new Date().toDateString(),
+            unlockedSkins: ['default'],
+            inbox: [], // 받은 편지함
+        };
+        localStorage.setItem('bottle_user', JSON.stringify(newUser));
+        return newUser;
+    },
+    saveUser() {
+        localStorage.setItem('bottle_user', JSON.stringify(state.user));
+    },
+    checkDailyVoucher() {
+        const today = new Date().toDateString();
+        if (state.user.lastLoginDate !== today) {
+            state.user.vouchers = Math.min(state.user.vouchers + 1, 5); // 최대 5개
+            state.user.lastLoginDate = today;
+            this.saveUser();
         }
     },
-    saveWorries() {
-        localStorage.setItem('temperatureOfHeart', JSON.stringify(state.worries));
+    getCommunityWorries() {
+        const worriesJSON = localStorage.getItem('bottle_community_worries');
+        if (worriesJSON) {
+            return JSON.parse(worriesJSON);
+        }
+        localStorage.setItem('bottle_community_worries', JSON.stringify(SEED_WORRIES));
+        return SEED_WORRIES;
     },
-    seed() {
-        const seedData = [
-            {
-                id: `worry-${Date.now()}-1`,
-                text: "요즘 부쩍 외롭다는 생각이 들어요. 다들 잘 지내는 것 같은데 저만 도태되는 기분이에요.",
-                timestamp: new Date().toISOString(),
-                isMe: false,
-                replies: [
-                    { id: `reply-${Date.now()}-1`, text: "그런 기분 정말 잘 알아요. 하지만 보이는 게 전부는 아니더라고요. 모두들 각자의 힘듦을 안고 살아가요. 당신도 충분히 잘하고 있어요.", timestamp: new Date().toISOString(), isAdopted: false },
-                    { id: `reply-${Date.now()}-2`, text: "외로움은 누구나 느끼는 감정이에요. 혼자라고 생각될 때, 이곳에 와서 이야기를 나눠보세요. 분명 마음이 따뜻해질 거예요.", timestamp: new Date().toISOString(), isAdopted: true },
-                ]
-            },
-            {
-                id: `worry-${Date.now()}-2`,
-                text: "새로운 도전을 앞두고 있는데, 잘 해낼 수 있을지 자신이 없어요. 실패할까 봐 두려워요.",
-                timestamp: new Date().toISOString(),
-                isMe: false,
-                replies: [
-                    { id: `reply-${Date.now()}-3`, text: "도전하는 것만으로도 정말 대단한 용기예요! 결과에 상관없이 그 과정은 당신에게 소중한 자산이 될 거예요. 응원할게요!", timestamp: new Date().toISOString(), isAdopted: false },
-                ]
-            }
-        ];
-        state.worries = seedData;
-        this.saveWorries();
-        return seedData;
-    }
+    getMyWorries() {
+        const worriesJSON = localStorage.getItem('bottle_my_worries');
+        return worriesJSON ? JSON.parse(worriesJSON) : [];
+    },
+    saveMyWorries() {
+        localStorage.setItem('bottle_my_worries', JSON.stringify(state.myWorries));
+    },
 };
 
 // --- UI 렌더링 ---
 const UIRenderer = {
     render() {
-        // 모든 페이지 숨기기
+        this.renderUserStatus();
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-        // 현재 페이지 표시
         const currentPageEl = document.getElementById(`${state.currentPage}-page`);
         if (currentPageEl) {
             currentPageEl.classList.add('active');
         }
 
         switch (state.currentPage) {
-            case 'my-posts':
-                this.renderMyPostsPage();
-                break;
-            case 'community':
-                this.renderCommunityPage();
-                break;
-            case 'home':
-            default:
-                this.renderHomePage();
-                break;
+            case 'inbox': this.renderInbox(); break;
+            case 'outbox': this.renderOutbox(); break;
+            case 'sea':
+            default: this.renderSea(); break;
         }
     },
-
-    renderHomePage() {
-        // 홈 페이지는 기본 HTML 구조를 사용하므로 특별한 렌더링이 필요 없을 수 있음
-        // 하지만 동적으로 생성된 컨텐츠가 있다면 여기에 로직 추가
-        const lettersContainer = document.getElementById('letters-container');
-        lettersContainer.innerHTML = '<h2>📝 최근 남겨진 온기</h2> <p>고민을 남기면 이곳에 다른 사람들의 따뜻한 마음이 도착할 거예요.</p>';
+    renderUserStatus() {
+        document.getElementById('user-temp').textContent = `마음의 온도: ${state.user.temperature.toFixed(1)}℃`;
+        document.getElementById('user-vouchers').textContent = `고민권: ${state.user.vouchers}개`;
+        document.getElementById('show-worry-modal').disabled = state.user.vouchers <= 0;
     },
-
-    renderMyPostsPage() {
-        const container = document.getElementById('my-posts-container');
-        const myWorries = state.worries.filter(w => w.isMe).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
-        if (myWorries.length === 0) {
-            container.innerHTML = '<p>아직 작성한 고민이 없어요. 홈에서 당신의 이야기를 들려주세요.</p>';
+    renderSea() { /* 현재는 정적 컨텐츠 */ },
+    renderInbox() {
+        const container = document.getElementById('inbox-container');
+        if(state.user.inbox.length === 0){
+            container.innerHTML = '<p>아직 도착한 마음이 없어요.<br>바다에서 유리병을 주워보세요.</p>';
             return;
         }
-
-        container.innerHTML = myWorries.map(worry => this.createPostHTML(worry, true)).join('');
-    },
-
-    renderCommunityPage() {
-        const container = document.getElementById('community-posts-container');
-        const communityWorries = state.worries.filter(w => !w.isMe).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
-        if (communityWorries.length === 0) {
-            container.innerHTML = '<p>다른 사람들의 이야기가 아직 없네요.</p>';
-            return;
-        }
-        
-        container.innerHTML = communityWorries.map(worry => this.createPostHTML(worry, false)).join('');
-    },
-    
-    createPostHTML(worry, isMyPost) {
-        const repliesHTML = worry.replies.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(reply => `
-            <div class="reply-card ${reply.isAdopted ? 'adopted' : ''}" data-reply-id="${reply.id}">
-                <p>${reply.text}</p>
-                <div class="reply-actions">
-                    ${isMyPost ? `<button class="adopt-btn" data-action="adopt-reply" data-worry-id="${worry.id}" data-reply-id="${reply.id}" ${reply.isAdopted ? 'disabled' : ''}>${reply.isAdopted ? '채택됨' : '채택하기'}</button>` : ''}
-                </div>
+        container.innerHTML = state.user.inbox.map(worry => `
+            <div class="bottle-card" data-action="view-worry" data-worry-id="${worry.id}">
+                <p class="worry-snippet">"${worry.text}"</p>
+                <span class="card-status">${worry.replied ? '답장 완료' : '답장하기'}</span>
             </div>
         `).join('');
-
-        const replyFormHTML = !isMyPost ? `
-            <form class="reply-input-form" data-action="submit-reply" data-worry-id="${worry.id}">
-                <textarea placeholder="따뜻한 마음을 나눠주세요..."></textarea>
-                <button type="submit">답장 남기기</button>
-            </form>
-        ` : '';
-
-        return `
-            <div class="post-card" data-worry-id="${worry.id}">
-                <p class="worry-content">${worry.text}</p>
-                <div class="replies-section">
-                    ${repliesHTML || '<p style="opacity: 0.7; text-align:center;">아직 도착한 마음이 없어요.</p>'}
-                </div>
-                ${replyFormHTML}
+    },
+    renderOutbox() {
+        const container = document.getElementById('outbox-container');
+         if(state.myWorries.length === 0){
+            container.innerHTML = '<p>아직 바다에 띄운 마음이 없어요.</p>';
+            return;
+        }
+        container.innerHTML = state.myWorries.map(worry => `
+            <div class="bottle-card" data-action="view-my-worry" data-worry-id="${worry.id}">
+                <p class="worry-snippet">"${worry.text}"</p>
+                <span class="card-status">${worry.replies.length}개의 답장 도착</span>
             </div>
-        `;
-    }
+        `).join('');
+    },
+    // 상세 보기 렌더링은 App 로직에서 처리
 };
 
 // --- 애플리케이션 로직 ---
 const App = {
     init() {
-        state.worries = DataManager.getWorries();
+        DataManager.init();
         this.setupEventListeners();
-        
-        // URL 해시를 기반으로 초기 페이지 설정
         const hash = window.location.hash.replace('#', '');
-        if (['home', 'my-posts', 'community'].includes(hash)) {
+        if (['sea', 'inbox', 'outbox'].includes(hash)) {
             state.currentPage = hash;
         }
-        
-        UIRenderer.render();
         this.updateNav();
+        UIRenderer.render();
     },
 
     setupEventListeners() {
-        // 네비게이션
-        const nav = document.querySelector('nav');
-        nav.addEventListener('click', e => {
+        document.querySelector('nav').addEventListener('click', e => {
             if (e.target.tagName === 'A') {
-                const page = e.target.hash.replace('#', '');
-                this.navigate(page);
+                this.navigate(e.target.hash.replace('#', ''));
             }
         });
 
-        // 메인 컨텐츠 영역의 이벤트 위임
-        const main = document.querySelector('main');
-        main.addEventListener('click', e => {
-            const target = e.target;
-            const action = target.dataset.action || (target.closest('form') ? target.closest('form').dataset.action : null);
-
-            if (action === 'adopt-reply') {
-                const worryId = target.dataset.worryId;
-                const replyId = target.dataset.replyId;
-                this.handleAdoptReply(worryId, replyId);
-            }
-        });
-
-        main.addEventListener('submit', e => {
-             const target = e.target;
-             const action = target.dataset.action;
-
-            if (action === 'submit-reply') {
-                e.preventDefault();
-                const worryId = target.dataset.worryId;
-                const textarea = target.querySelector('textarea');
-                this.handleReplySubmit(worryId, textarea.value);
-                textarea.value = '';
-            }
-        });
-        
-        // 홈 페이지 고민 제출
-        const worrySubmitBtn = document.getElementById('submit-worry');
-        worrySubmitBtn.addEventListener('click', () => {
-             const input = document.getElementById('worry-input');
-             this.handleWorrySubmit(input.value);
-             input.value = '';
-        });
+        const modal = document.getElementById('worry-modal');
+        document.getElementById('show-worry-modal').addEventListener('click', () => modal.style.display = 'flex');
+        document.querySelector('.modal-close-btn').addEventListener('click', () => modal.style.display = 'none');
+        document.getElementById('send-worry-bottle').addEventListener('click', this.handleSendWorry.bind(this));
+        document.getElementById('get-bottle-from-sea').addEventListener('click', this.handleGetBottle.bind(this));
     },
 
     navigate(page) {
@@ -203,69 +161,71 @@ const App = {
 
     updateNav() {
         document.querySelectorAll('nav a').forEach(a => {
-            if (a.hash.replace('#', '') === state.currentPage) {
-                a.classList.add('active');
-            } else {
-                a.classList.remove('active');
-            }
+            a.classList.toggle('active', a.hash.replace('#', '') === state.currentPage);
         });
     },
 
-    handleWorrySubmit(text) {
-        text = text.trim();
-        if (!text) {
-            alert('이야기를 들려주세요.');
-            return;
-        }
+    handleSendWorry() {
+        const input = document.getElementById('worry-input');
+        const text = input.value.trim();
+        if (!text) { alert('이야기를 들려주세요.'); return; }
+        if (state.user.vouchers <= 0) { alert('고민권이 부족해요.'); return; }
+
+        state.user.vouchers--;
         const newWorry = {
-            id: `worry-${Date.now()}`,
+            id: `my-${Date.now()}`,
             text,
             timestamp: new Date().toISOString(),
-            isMe: true,
-            replies: []
+            replies: [],
         };
-        state.worries.push(newWorry);
-        DataManager.saveWorries();
-        alert('당신의 이야기가 기록되었어요. "내 고민" 페이지에서 확인해보세요.');
-        this.navigate('my-posts');
+        state.myWorries.push(newWorry);
+        DataManager.saveMyWorries();
+        DataManager.saveUser();
+        
+        input.value = '';
+        document.getElementById('worry-modal').style.display = 'none';
+        alert('당신의 마음을 바다에 띄워보냈어요.');
+        this.navigate('outbox');
+
+        // 답장 시뮬레이션
+        setTimeout(() => this.simulateReply(newWorry.id), 5000);
     },
 
-    handleReplySubmit(worryId, text) {
-        text = text.trim();
-        if (!text) {
-            alert('따뜻한 마음을 나눠주세요.');
+    handleGetBottle() {
+        const unreadWorries = state.communityWorries.filter(w => !state.user.inbox.find(inboxWorry => inboxWorry.id === w.id));
+        if (unreadWorries.length === 0) {
+            alert('지금은 바다에 떠다니는 유리병이 없네요. 잠시 후에 다시 시도해주세요.');
             return;
         }
-        const worry = state.worries.find(w => w.id === worryId);
+        const worry = unreadWorries[Math.floor(Math.random() * unreadWorries.length)];
+        state.user.inbox.push(worry);
+        DataManager.saveUser();
+        alert('누군가의 마음이 담긴 유리병을 주웠어요. 받은 편지함에서 확인해보세요.');
+        this.navigate('inbox');
+    },
+
+    simulateReply(myWorryId) {
+        const worry = state.myWorries.find(w => w.id === myWorryId);
         if (worry) {
+            const replyText = PRE_WRITTEN_REPLIES[Math.floor(Math.random() * PRE_WRITTEN_REPLIES.length)];
             const newReply = {
-                id: `reply-${Date.now()}`,
-                text,
-                timestamp: new Date().toISOString(),
+                id: `sim-reply-${Date.now()}`,
+                text: replyText,
+                author: '어느 따뜻한 마음',
                 isAdopted: false,
             };
             worry.replies.push(newReply);
-            DataManager.saveWorries();
-            UIRenderer.render(); // 현재 뷰 다시 렌더링
+            state.user.temperature += 0.1; // 온기 상승
+            DataManager.saveMyWorries();
+            DataManager.saveUser();
+            // 현재 outbox에 있다면 다시 렌더링
+            if (state.currentPage === 'outbox') {
+                UIRenderer.render();
+            }
+            alert('내가 보낸 마음에 답장이 도착했어요!');
         }
     },
-
-    handleAdoptReply(worryId, replyIdToAdopt) {
-        const worry = state.worries.find(w => w.id === worryId);
-        if (worry) {
-            // 모든 답장의 채택 상태를 false로 초기화
-            worry.replies.forEach(reply => {
-                reply.isAdopted = false;
-            });
-            // 선택된 답장만 채택 상태로 변경
-            const replyToAdopt = worry.replies.find(r => r.id === replyIdToAdopt);
-            if (replyToAdopt) {
-                replyToAdopt.isAdopted = true;
-            }
-            DataManager.saveWorries();
-            UIRenderer.render(); // 현재 뷰 다시 렌더링
-        }
-    }
+    // 답장하기, 채택하기 등 상세 로직은 향후 확장
 };
 
 // --- 앱 초기화 ---

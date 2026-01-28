@@ -7,67 +7,60 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <link href="/style.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-    <header>
-        <h1>마음의 온도</h1>
-    </header>
+    <div id="app-container">
+        <header>
+            <div class="user-status">
+                <span id="user-temp">마음의 온도: 36.5℃</span>
+                <span id="user-vouchers">고민권: 1개</span>
+            </div>
+            <nav>
+                <a href="#sea" id="nav-sea" class="active">바다</a>
+                <a href="#inbox" id="nav-inbox">받은 편지함</a>
+                <a href="#outbox" id="nav-outbox">보낸 편지함</a>
+            </nav>
+        </header>
 
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>마음의 온도</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo&display=swap" rel="stylesheet">
-    <link href="/style.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-</head>
-<body>
-    <header>
-        <h1>마음의 온도</h1>
-        <nav>
-            <a href="#home" id="nav-home" class="active">홈</a>
-            <a href="#my-posts" id="nav-my-posts">내 고민</a>
-            <a href="#community" id="nav-community">커뮤니티</a>
-        </nav>
-    </header>
+        <main>
+            <!-- 바다 페이지 (홈) -->
+            <div id="sea-page" class="page active">
+                <div class="sea-content">
+                    <h1>오늘, 당신의 마음은 어떤가요?</h1>
+                    <p>이곳에 당신의 이야기를 띄워보내면<br>따뜻한 마음을 가진 누군가에게 닿을 거예요.</p>
+                    <button id="show-worry-modal" class="glowing-btn">유리병에 마음 담기</button>
+                    <button id="get-bottle-from-sea">바다에서 유리병 줍기</button>
+                </div>
+            </div>
 
-    <main>
-        <!-- 홈 페이지 -->
-        <div id="home-page" class="page active">
-            <section class="worry-input-section">
-                <h2>당신의 마음은 어떤가요?</h2>
-                <textarea id="worry-input" placeholder="이곳에 당신의 이야기를 들려주세요..."></textarea>
-                <button id="submit-worry">온기 보내기</button>
-            </section>
-            <section id="letters-container" class="letters-section">
-                <!-- 기존에 작성된 고민에 대한 답장이 여기에 표시될 수 있습니다. -->
-            </section>
+            <!-- 받은 편지함 페이지 -->
+            <div id="inbox-page" class="page">
+                <h2>나에게 온 마음들</h2>
+                <div id="inbox-container"></div>
+            </div>
+
+            <!-- 보낸 편지함 페이지 -->
+            <div id="outbox-page" class="page">
+                <h2>내가 보낸 마음들</h2>
+                <div id="outbox-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 고민 작성 모달 -->
+    <div id="worry-modal" class="modal-container" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <h2>유리병에 마음 담기</h2>
+            <textarea id="worry-input" placeholder="이곳에 당신의 이야기를 들려주세요..."></textarea>
+            <button id="send-worry-bottle" class="glowing-btn">마음 띄워보내기</button>
         </div>
-
-        <!-- 내 고민 페이지 -->
-        <div id="my-posts-page" class="page">
-            <h2>내 고민 목록</h2>
-            <div id="my-posts-container"></div>
-        </div>
-
-        <!-- 커뮤니티 페이지 -->
-        <div id="community-page" class="page">
-            <h2>다른 사람들의 이야기</h2>
-            <div id="community-posts-container"></div>
-        </div>
-    </main>
+    </div>
 
     <script defer type="text/javascript" src="/main.js"></script>
 </body>
 </html>
 
-
-    <script defer type="text/javascript" src="/main.js"></script>
-</body>
-</html>
